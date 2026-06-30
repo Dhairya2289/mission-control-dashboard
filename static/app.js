@@ -1286,8 +1286,22 @@ window.app = function () {
     },
 
     renderMarkdown(md) {
-      if (typeof marked === "undefined") return "<p>" + this.escapeHtml(md).replace(/\n/g, "<br>") + "</p>";
-      return marked.parse(md || "", { mangle: false, headerIds: false });
+      // marked.parse() emits raw HTML — any <script>/<img onerror=...> in the
+      // source (model-returned text, scraped notes, vault markdown) would run
+      // when bound via x-html. Sanitize through DOMPurify before returning.
+      const text = md || "";
+      if (typeof marked === "undefined") {
+        return "<p>" + this.escapeHtml(text).replace(/\n/g, "<br>") + "</p>";
+      }
+      const html = marked.parse(text, { mangle: false, headerIds: false });
+      return (typeof DOMPurify !== "undefined") ? DOMPurify.sanitize(html) : html;
+    },
+
+    renderChatText(text) {
+      // Chat bubbles render user + agent text. Both are untrusted — agents
+      // routinely return raw HTML in their responses. Escape every character
+      // first, THEN turn newlines into <br>. No marked, no x-html footgun.
+      return this.escapeHtml(text || "").replace(/\n/g, "<br>");
     },
 
     escapeHtml(s) {

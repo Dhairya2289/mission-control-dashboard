@@ -49,6 +49,9 @@
   <!-- Vendors (self-hosted; same-origin so errors are visible, not opaque). app.js MUST load before Alpine so app() is defined when Alpine initialises x-data. -->
   <script src="/static/vendor/apexcharts.min.js" defer></script>
   <script src="/static/vendor/marked.min.js" defer></script>
+  <!-- DOMPurify sanitizes every marked.parse() output before x-html binds it.
+       MUST load before app.js so renderMarkdown() can detect window.DOMPurify. -->
+  <script src="/static/vendor/purify.min.js" defer></script>
 
   <!-- (b) Stats: Observable Plot + d3. (c) Library: Mermaid + Markmap.
        (d) Graph: Cytoscape. (e) Terminal: xterm + fit addon.
@@ -863,7 +866,7 @@
                     </div>
                     <div class="chat-bubble-wrap" :class="msg.role === 'user' ? 'chat-bubble-right' : 'chat-bubble-left'">
                       <div class="chat-bubble" :class="chatBubbleClass(msg.role)">
-                        <div class="chat-bubble-text" x-html="msg.text.replace(/\n/g, '<br>')"></div>
+                        <div class="chat-bubble-text" x-html="renderChatText(msg.text)"></div>
                         <div class="chat-bubble-meta">
                           <span x-text="new Date(msg.created_at).toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'})"></span>
                         </div>
