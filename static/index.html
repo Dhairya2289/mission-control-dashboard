@@ -53,29 +53,10 @@
        MUST load before app.js so renderMarkdown() can detect window.DOMPurify. -->
   <script src="/static/vendor/purify.min.js" defer></script>
 
-  <!-- (b) Stats: Observable Plot + d3. (c) Library: Mermaid + Markmap.
-       (d) Graph: Cytoscape. (e) Terminal: xterm + fit addon.
-       All vendored (no runtime CDN). `defer` keeps document-order execution;
-       markmap-view must precede markmap-lib (lib needs view's globals merged). -->
-  <script src="/static/vendor/d3.min.js" defer></script>
-  <script src="/static/vendor/plot.umd.min.js" defer></script>
-  <script src="/static/vendor/mermaid.min.js" defer></script>
-  <script src="/static/vendor/cytoscape.min.js" defer></script>
-  <script src="/static/vendor/xterm.js" defer></script>
-  <script src="/static/vendor/xterm-addon-fit.js" defer></script>
-  <script src="/static/vendor/markmap-view.js" defer></script>
-  <script src="/static/vendor/markmap-lib.js" defer></script>
-  <script src="/static/vendor/markmap-toolbar.js" defer></script>
-  <!-- Initialise Mermaid once the script is parsed (dark, manual run). -->
-  <script defer>
-    window.addEventListener("DOMContentLoaded", function () {
-      try {
-        if (window.mermaid) {
-          window.mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict", fontFamily: "Inter, system-ui, sans-serif" });
-        }
-      } catch (e) {}
-    });
-  </script>
+  <!-- Heavy vendor libs (d3, plot, mermaid, cytoscape, xterm, markmap — ~4 MB
+       total) are lazy-loaded by app.js's loadVendor() the first time their tab
+       opens. Briefing/Overview/Chat/Library skip the cost entirely. Mermaid's
+       startOnLoad is initialized in loadVendor() to keep this contract local. -->
 
   <script src="/static/app.js" defer></script>
   <script src="/static/vendor/alpine.min.js" defer></script>

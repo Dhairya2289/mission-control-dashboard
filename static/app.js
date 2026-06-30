@@ -1294,6 +1294,48 @@ window.app = function () {
       return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")  .replace(/"/g, "&quot;");
     },
 
+    // ----- Lazy vendor loader -----
+    // Briefing/Overview don't need cytoscape / mermaid / xterm / d3+plot —
+    // those are 4+ MB of JS the user pays for whether they ever open the
+    // System, Stats, Brain, Graph, Terminal, or Lecture tabs. Each entry below
+    // injects its <script> tags on first use and memoizes the promise so
+    // subsequent calls are zero-cost. Tab-mount methods await this before
+    // touching the globals.
+    _vendorPromises: {},
+    loadVendor(name) {
+      if (this._vendorPromises[name]) return this._vendorPromises[name];
+      const VENDOR_SCRIPTS = {
+        d3plot: ["/static/vendor/d3.min.js", "/static/vendor/plot.umd.min.js"],
+        cytoscape: ["/static/vendor/cytoscape.min.js"],
+        xterm: ["/static/vendor/xterm.js", "/static/vendor/xterm-addon-fit.js"],
+        mermaid: ["/static/vendor/mermaid.min.js"],
+        markmap: ["/static/vendor/markmap-view.js", "/static/vendor/markmap-lib.js", "/static/vendor/markmap-toolbar.js"],
+      };
+      const srcs = VENDOR_SCRIPTS[name];
+      if (!srcs) return (this._vendorPromises[name] = Promise.reject(new Error("unknown vendor: " + name)));
+      const loadOne = (src) => new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[src="' + src + '"]');
+        if (existing) { resolve(); return; }
+        const s = document.createElement("script");
+        s.src = src; s.async = false;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error("vendor load failed: " + src));
+        document.head.appendChild(s);
+      });
+      // Sequential within a bundle so order-sensitive pairs (markmap-view before
+      // markmap-lib, xterm before fit-addon) keep their contract.
+      const p = srcs.reduce((acc, src) => acc.then(() => loadOne(src)), Promise.resolve())
+        .then(() => {
+          if (name === "mermaid" && window.mermaid) {
+            try {
+              window.mermaid.initialize({ startOnLoad: false, theme: "dark", securityLevel: "strict", fontFamily: "Inter, system-ui, sans-serif" });
+            } catch (_) {}
+          }
+        });
+      this._vendorPromises[name] = p;
+      return p;
+    },
+
     // ============================================================
     // NOTES LIBRARY
     // ============================================================
@@ -4071,6 +4113,7 @@ window.app = function () {
       if (this.statsTab.loading) return;
       this.statsTab.loading = true;
       this.statsTab.error = "";
+      try { await this.loadVendor("d3plot"); } catch (e) { this.statsTab.error = "Stats library failed to load."; this.statsTab.loading = false; return; }
       const get = async (path) => {
         try {
           const r = await fetch(path);
@@ -4250,13 +4293,17 @@ window.app = function () {
     // ============================================================
     // (c) LIBRARY — Mermaid diagrams + Markmap mind-map of the current note.
     // ============================================================
-    renderMermaidIn(containerId) {
+    async renderMermaidIn(containerId) {
       try {
-        if (typeof mermaid === "undefined") return;
         const root = document.getElementById(containerId);
         if (!root) return;
         // marked renders fenced ```mermaid as <pre><code class="language-mermaid">.
         const blocks = root.querySelectorAll("code.language-mermaid, code.lang-mermaid");
+        if (!blocks.length) return;
+        // Pay the 2.5 MB mermaid bundle cost only when this note actually
+        // contains a mermaid block.
+        try { await this.loadVendor("mermaid"); } catch (_) { return; }
+        if (typeof mermaid === "undefined") return;
         const nodes = [];
         blocks.forEach((code) => {
           const pre = code.closest("pre") || code;
@@ -4283,6 +4330,8 @@ window.app = function () {
       if (!host) return;
       if (!md.trim()) { host.parentElement && (host.parentElement.dataset.empty = "1"); return; }
       try {
+        // Lazy-load markmap (markmap-view + markmap-lib + toolbar = ~470 KB).
+        try { await this.loadVendor("markmap"); } catch (_) {}
         // markmap globals attach to window.markmap (vendored lib + view).
         const mk = window.markmap;
         if (!mk || !mk.Transformer || !mk.Markmap) {
@@ -4334,6 +4383,7 @@ window.app = function () {
       return "No graph data for this view yet.";
     },
     async loadGraph() {
+      try { await this.loadVendor("cytoscape"); } catch (e) { this.graph.error = "Graph library failed to load."; return; }
       if (typeof cytoscape === "undefined") { this.graph.error = "Graph library unavailable."; return; }
       this.graph.loading = true;
       this.graph.error = "";
@@ -4789,7 +4839,8 @@ window.app = function () {
     // ============================================================
     // (e) TERMINAL — xterm.js over ws://<host>/ws/terminal.
     // ============================================================
-    bootTerminal() {
+    async bootTerminal() {
+      try { await this.loadVendor("xterm"); } catch (e) { this.term.error = "Terminal library failed to load."; return; }
       if (typeof Terminal === "undefined") { this.term.error = "Terminal library unavailable."; return; }
       const host = document.getElementById("terminalHost");
       if (!host) return;

@@ -1045,22 +1045,30 @@ async def list_notes(subject: str) -> JSONResponse:
     if not notes_dir.is_dir():
         return JSONResponse({"subject": subject, "items": []})
 
-    items: list[dict[str, Any]] = []
-    for p in notes_dir.rglob("*"):
-        if not p.is_file() or p.suffix.lower() not in _NOTE_EXTS:
-            continue
-        try:
-            stat = p.stat()
-        except OSError:
-            continue
-        items.append({
-            "id": str(p.relative_to(notes_dir)),
-            "name": p.name,
-            "relative_path": str(p.relative_to(subj_dir)),
-            "size_bytes": stat.st_size,
-            "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
-            "modified_ts": stat.st_mtime,
-        })
+    def _scan() -> list[dict[str, Any]]:
+        # rglob + stat against the vault is filesystem-bound (and on ntfs3 it
+        # can stall the event loop for non-trivial subject trees). Run it in a
+        # worker thread so concurrent requests to other endpoints aren't
+        # blocked while a Library tab refreshes.
+        out: list[dict[str, Any]] = []
+        for p in notes_dir.rglob("*"):
+            if not p.is_file() or p.suffix.lower() not in _NOTE_EXTS:
+                continue
+            try:
+                stat = p.stat()
+            except OSError:
+                continue
+            out.append({
+                "id": str(p.relative_to(notes_dir)),
+                "name": p.name,
+                "relative_path": str(p.relative_to(subj_dir)),
+                "size_bytes": stat.st_size,
+                "modified_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+                "modified_ts": stat.st_mtime,
+            })
+        return out
+
+    items = await asyncio.to_thread(_scan)
     items.sort(key=lambda i: i["modified_ts"], reverse=True)
     for i in items:
         i.pop("modified_ts", None)
