@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Design Reference · Mission Control</title>
+  <style>
+    /* Cartography · Blueprint Teal — standalone reference of the design system.
+       (The full living style guide lives in the app at System ▸ Design Reference.) */
+    :root {
+      --bg:#0a1016; --panel:#0e1c24; --line:rgba(150,224,220,0.15); --ink:#eef5f4;
+      --muted:rgba(238,245,244,0.55); --accent:#2dd4bf; --copper:#e0915a;
+      --ok:#5cc9a3; --err:#f0808a;
+    }
+    * { box-sizing: border-box; }
+    body { font: 14px/1.5 ui-monospace, "JetBrains Mono", Menlo, monospace;
+           background:
+             radial-gradient(120% 90% at 50% -10%, rgba(45,212,191,0.06), transparent 60%),
+             var(--bg);
+           color:var(--ink); margin:0; padding:2rem 2.5rem; min-height:100vh; }
+    a { color:var(--accent); }
+    h1 { font-size: 1.15rem; letter-spacing:.04em; color:var(--accent); margin:0 0 .25rem; }
+    .sub { color:var(--muted); margin:0 0 1.5rem; max-width:62rem; }
+    code { background:rgba(45,212,191,0.10); color:#9be0d5; padding:.1rem .35rem; border-radius:4px; }
+    .grid { display:grid; gap:1rem; max-width:60rem; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:14px;
+            padding:1rem 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.30); }
+    .card h2 { font-size:.8rem; letter-spacing:.12em; text-transform:uppercase;
+               color:var(--muted); margin:0 0 .75rem; }
+    .row { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; }
+    .row > * { margin: 0; }
+    button, .btn {
+      font: inherit; color:var(--ink); background:rgba(160,228,224,0.05);
+      border:1px solid var(--line); padding:.45rem .85rem; border-radius:8px;
+      cursor:pointer; text-decoration:none; transition:all .15s ease;
+    }
+    button:hover, .btn:hover { border-color:var(--accent); color:var(--accent);
+      box-shadow:0 0 0 1px rgba(45,212,191,0.25); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .drop { border:1px dashed var(--line); border-radius:12px; padding:2rem;
+            text-align:center; color:var(--muted); cursor:pointer; transition:all .15s; }
+    .drop.hover { border-color:var(--accent); color:var(--accent); background:rgba(45,212,191,0.06); }
+    input[type=file] { display:none; }
+    pre { white-space:pre-wrap; word-break:break-word; margin:0; font-size:.8rem;
+          background:#070d12; border:1px solid var(--line); border-radius:8px;
+          padding:.75rem; max-height:24rem; overflow:auto; }
+    .pill { display:inline-block; padding:.1rem .5rem; border-radius:999px;
+            background:rgba(160,228,224,0.07); color:var(--muted); font-size:.75rem; margin-right:.4rem; }
+    .ok { color:var(--ok); } .err { color:var(--err); }
+    .thumbs { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+              gap:.6rem; margin-top:.5rem; }
+    .thumb { background:#070d12; border:1px solid var(--line); border-radius:10px;
+             overflow:hidden; }
+    .thumb img { width:100%; height:120px; object-fit:cover; display:block; }
+    .thumb .meta { padding:.4rem .5rem; font-size:.72rem; color:var(--muted);
+                   display:flex; justify-content:space-between; gap:.4rem; }
+    .thumb a { color:var(--ink); }
+    .meta button { padding:.1rem .4rem; font-size:.7rem; }
+  </style>
+</head>
+<body>
+  <h1>Design Reference</h1>
+  <p class="sub">
+    Reference-asset store for <b>Cartography · Blueprint Teal (v3.0)</b>. Upload a reference
+    template (<code>.html</code>) and screenshots (<code>.png/.jpg/.webp/.gif/.svg</code>) here.
+    The full living style guide — palette, type, motion and components — is in the app under
+    <b>System ▸ Design Reference</b>.
+    &nbsp;&nbsp;<a href="/">← back to Mission Control</a>
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Upload</h2>
+      <label id="drop" class="drop" for="fileInput">
+        <div><b>Drop files here</b> or click to choose</div>
+        <div style="margin-top:.4rem; font-size:.8rem;">
+          .html / .htm replace the canonical template. Images go to screenshots.
+          Max 50 MB per file.
+        </div>
+        <input id="fileInput" type="file" multiple
+               accept=".html,.htm,.png,.jpg,.jpeg,.webp,.gif,.svg" />
+      </label>
+      <div class="row" style="margin-top:.75rem;">
+        <button id="uploadBtn" disabled>Upload</button>
+        <span id="picked" class="pill">no files selected</span>
+      </div>
+      <pre id="uploadResult" style="margin-top:.75rem; display:none;"></pre>
+    </div>
+
+    <div class="card">
+      <h2>Current state</h2>
+      <div id="state">loading…</div>
+    </div>
+
+    <div class="card">
+      <h2>Endpoints (for reference)</h2>
+      <ul style="margin:0; padding-left:1.1rem; color:var(--muted);">
+        <li><code>GET /api/design-reference</code> — JSON listing</li>
+        <li><code>POST /api/design-reference/upload</code> — multipart files</li>
+        <li><code>GET /api/design-reference/template</code> — view template</li>
+        <li><code>GET /api/design-reference/template/download</code> — download</li>
+        <li><code>GET /api/design-reference/screenshots/{name}</code> — view image</li>
+        <li><code>GET /api/design-reference/screenshots/{name}?download=1</code> — download</li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+const drop = document.getElementById("drop");
+const input = document.getElementById("fileInput");
+const btn = document.getElementById("uploadBtn");
+const picked = document.getElementById("picked");
+const result = document.getElementById("uploadResult");
+const state = document.getElementById("state");
+
+let chosen = [];
+
+function setPicked() {
+  if (!chosen.length) { picked.textContent = "no files selected"; btn.disabled = true; return; }
+  picked.textContent = chosen.map(f => `${f.name} (${(f.size/1024).toFixed(1)} KB)`).join(", ");
+  btn.disabled = false;
+}
+
+input.addEventListener("change", () => { chosen = [...input.files]; setPicked(); });
+
+["dragenter","dragover"].forEach(e =>
+  drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add("hover"); }));
+["dragleave","drop"].forEach(e =>
+  drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove("hover"); }));
+drop.addEventListener("drop", ev => {
+  chosen = [...ev.dataTransfer.files];
+  setPicked();
+});
+
+btn.addEventListener("click", async () => {
+  if (!chosen.length) return;
+  btn.disabled = true; btn.textContent = "uploading…";
+  const fd = new FormData();
+  for (const f of chosen) fd.append("files", f, f.name);
+  result.style.display = "block";
+  result.className = "";
+  try {
+    const r = await fetch("/api/design-reference/upload", { method:"POST", body: fd });
+    const j = await r.json();
+    result.textContent = JSON.stringify(j, null, 2);
+    result.className = r.ok ? "ok" : "err";
+    chosen = []; input.value = ""; setPicked();
+    await loadState();
+  } catch (e) {
+    result.textContent = String(e);
+    result.className = "err";
+  } finally {
+    btn.disabled = false; btn.textContent = "Upload";
+  }
+});
+
+async function loadState() {
+  try {
+    const j = await (await fetch("/api/design-reference")).json();
+    let html = `<div class="row" style="margin-bottom:.5rem;">
+      <span class="pill">root</span><code>${j.root}</code>
+    </div>`;
+    if (j.template) {
+      html += `<div class="row" style="margin-bottom:.4rem;">
+        <span class="pill ok">template</span>
+        <code>${j.template.path}</code>
+        <a class="btn" href="/api/design-reference/template" target="_blank">view</a>
+        <a class="btn" href="/api/design-reference/template/download">download</a>
+        <span class="pill">${(j.template.size_bytes/1024).toFixed(1)} KB</span>
+        <span class="pill">${j.template.modified}</span>
+      </div>`;
+    } else {
+      html += `<div class="row"><span class="pill err">template</span> not uploaded yet</div>`;
+    }
+    html += `<div style="margin-top:.8rem;"><span class="pill">screenshots (${j.screenshots.length})</span></div>`;
+    if (j.screenshots.length) {
+      html += `<div class="thumbs">` + j.screenshots.map(s => {
+        const isImg = /\.(png|jpe?g|webp|gif|svg)$/i.test(s.name);
+        const url = `/api/design-reference/screenshots/${encodeURIComponent(s.name)}`;
+        return `<div class="thumb">
+          ${isImg ? `<a href="${url}" target="_blank"><img src="${url}" alt="${s.name}"/></a>` : ""}
+          <div class="meta">
+            <a href="${url}" target="_blank" title="${s.path}">${s.name}</a>
+            <span>${(s.size_bytes/1024).toFixed(0)}KB</span>
+          </div>
+        </div>`;
+      }).join("") + `</div>`;
+    }
+    if (j.archive && j.archive.length) {
+      html += `<div style="margin-top:.8rem;"><span class="pill">archive (${j.archive.length})</span></div>`;
+      html += `<pre>${j.archive.map(a => `${a.modified}  ${a.size_bytes}B  ${a.path}`).join("\n")}</pre>`;
+    }
+    state.innerHTML = html;
+  } catch (e) {
+    state.innerHTML = `<span class="err">${e}</span>`;
+  }
+}
+loadState();
+</script>
+</body>
+</html>

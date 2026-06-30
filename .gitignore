@@ -1,0 +1,90 @@
+# Gitignore for Mission Control Dashboard
+#
+# Philosophy: strict allowlist publishing. Only tracked files ship. Personal data
+# (DBs, backups, roadmap/, profile photo) stays on disk but untracked.
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtualenv (the dashboard's own)
+.venv/
+venv/
+ENV/
+env/
+
+# ---------------------------------------------------------------------------
+# Personal data & generated artifacts (never commit)
+# ---------------------------------------------------------------------------
+# SQLite databases (all Hermes + dashboard-local knowledge/memory DBs)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Personal roadmap override (ships a sample; real plan stays local)
+roadmap_private.py
+roadmap/
+roadmap_meta.json
+roadmap_spec.json
+tracker_plan.json
+
+# Backups, old versions, test screenshots
+backups/
+*.bak
+_smoke_*.png
+
+# Codebase knowledge graph (optional, generated)
+.codegraph/
+graphify-out/
+
+# Profile photo (keep placeholder .gitkeep)
+static/profile/*
+!static/profile/.gitkeep
+
+# ---------------------------------------------------------------------------
+# Logs & temp files
+# ---------------------------------------------------------------------------
+*.log
+*.log.*
+*.tmp
+.DS_Store
+Thumbs.db
+
+# ---------------------------------------------------------------------------
+# Secrets & env (never commit real values)
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------------------------
+# IDE & editor
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------------
+# Design-system archive (keep template.html + screenshots/, drop archive/)
+# ---------------------------------------------------------------------------
+design-reference/archive/
+
+# ---------------------------------------------------------------------------
+# Internal design notes (authored for the AI; not for external readers)
+# ---------------------------------------------------------------------------
+.impeccable.md
+REDESIGN-LIME-SPEC.md
+
+# ---------------------------------------------------------------------------
+# Smoke tests (reference local URLs; portfolio repo doesn't run them)
+# ---------------------------------------------------------------------------
+tests/

@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission Control · Aurora Design Reference · v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   AURORA DESIGN SYSTEM — v2.0
+   The complete visual language for Mission Control Dashboard
+   ============================================================ */
+
+/* ---------- TOKENS ---------- */
+:root {
+  /* Surface */
+  --bg-0: #0a0a0f;
+  --bg-1: #11111a;
+  --bg-2: rgba(255, 255, 255, 0.03);
+  --bg-3: rgba(255, 255, 255, 0.05);
+  --bg-4: rgba(255, 255, 255, 0.08);
+
+  /* Ink */
+  --ink-1: #f5f5f7;
+  --ink-2: rgba(245, 245, 247, 0.72);
+  --ink-3: rgba(245, 245, 247, 0.48);
+  --ink-4: rgba(245, 245, 247, 0.28);
+
+  /* Borders */
+  --border-1: rgba(255, 255, 255, 0.08);
+  --border-2: rgba(255, 255, 255, 0.14);
+
+  /* Accent */
+  --indigo: #6366f1;
+  --magenta: #d946ef;
+  --teal: #14b8a6;
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --green: #22c55e;
+
+  /* Gradients */
+  --grad-primary: linear-gradient(135deg, #6366f1, #d946ef);
+  --grad-warm: linear-gradient(135deg, #f59e0b, #f43f5e);
+  --grad-cool: linear-gradient(135deg, #14b8a6, #6366f1);
+  --grad-text: linear-gradient(135deg, #f5f5f7 0%, #a5b4fc 50%, #d946ef 100%);
+
+  /* Shadows */
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 20px 60px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 30px 80px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.3);
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --dur-fast: 200ms;
+  --dur-base: 400ms;
+  --dur-slow: 800ms;
+
+  /* Type */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-0);
+  color: var(--ink-1);
+  line-height: 1.5;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ---------- AURORA BACKGROUND ---------- */
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--bg-0);
+}
+
+.aurora-bg::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 40% at 20% 30%, rgba(99, 102, 241, 0.28), transparent 60%),
+    radial-gradient(35% 35% at 75% 65%, rgba(217, 70, 239, 0.22), transparent 60%),
+    radial-gradient(45% 45% at 50% 90%, rgba(20, 184, 166, 0.18), transparent 60%);
+  filter: blur(60px);
+  animation: aurora-drift 40s ease-in-out infinite alternate;
+}
+
+.aurora-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+}
+
+@keyframes aurora-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-2%, 1%) scale(1.05); }
+  100% { transform: translate(2%, -1%) scale(1); }
+}
+
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: -1;
+  will-change: transform;
+}
+
+.orb--1 { width: 480px; height: 480px; background: var(--indigo); top: 5%; left: 5%; animation: orb-float-1 28s ease-in-out infinite; }
+.orb--2 { width: 420px; height: 420px; background: var(--magenta); top: 45%; right: 5%; animation: orb-float-2 36s ease-in-out infinite; }
+.orb--3 { width: 360px; height: 360px; background: var(--teal); bottom: 5%; left: 35%; animation: orb-float-3 44s ease-in-out infinite; }
+.orb--4 { width: 280px; height: 280px; background: var(--amber); top: 70%; left: 15%; animation: orb-float-4 52s ease-in-out infinite; opacity: 0.3; }
+
+@keyframes orb-float-1 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(80px, -60px); } }
+@keyframes orb-float-2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-70px, 60px); } }
+@keyframes orb-float-3 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(50px, -90px); } }
+@keyframes orb-float-4 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-40px, -50px); } }
+
+/* Scroll progress bar */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: var(--grad-primary);
+  z-index: 1000;
+  width: 0%;
+  transition: width 100ms linear;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+}
+
+/* ---------- LAYOUT ---------- */
+.app {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar {
+  background: var(--bg-1);
+  border-right: 1px solid var(--border-1);
+  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(20px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem 1.5rem;
+  border-bottom: 1px solid var(--border-1);
+  margin-bottom: 1rem;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--grad-primary);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.brand-ver {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+
+.nav-section {
+  margin-bottom: 1.25rem;
+}
+
+.nav-section-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  padding: 0 0.75rem 0.5rem;
+  font-weight: 500;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out-quart);
+  position: relative;
+}
+
+.nav-item:hover {
+  background: var(--bg-2);
+  color: var(--ink-1);
+}
+
+.nav-item.active {
+  background: var(--bg-3);
+  color: var(--ink-1);
+  font-weight: 500;
+}
+
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--grad-primary);
+  border-radius: 0 3px 3px 0;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
+}
+
+.nav-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: transform var(--dur-fast);
+}
+
+.nav-item:hover svg { transform: rotate(-5deg) scale(1.1); }
+
+.gateway {
+  margin-top: auto;
+  padding: 0.75rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ink-2);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+/* ---------- MAIN ---------- */
+.main {
+  padding: 2.5rem 3rem;
+  max-width: 1400px;
+}
+
+/* ---------- TYPOGRAPHY ---------- */
+.italic-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 16px;
+  height: 1px;
+  background: var(--ink-3);
+}
+
+.page-title {
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  margin: 0.5rem 0 0.75rem;
+  line-height: 1.1;
+}
+
+.page-title .italic-serif {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.05em;
+}
+
+.page-sub {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  max-width: 640px;
+  line-height: 1.6;
+}
+
+.display-xl {
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+/* ---------- SCROLL REVEAL ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity var(--dur-slow) var(--ease-out-expo), transform var(--dur-slow) var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .orb, .aurora-bg::before, .status-dot { animation: none; }
+}
+
+/* ---------- GLASS CARD ---------- */
+.glass {
+  background: var(--bg-2);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-1);
+  border-radius: 16px;
+  box-shadow: var(--shadow-1);
+  padding: 1.5rem;
+  position: relative;
+  transition: all var(--dur-base) var(--ease-out-quart);
+}
+
+.glass:hover {
+  background: var(--bg-3);
+  border-color: var(--border-2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-2);
+}
+
+.glass-eyebrow {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  margin-bottom: 0.5rem;
+}
+
+.glass-title {
+  font-size: 1.05rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.glass-num {
+  font-family: var(--font-sans);
+  font-size: 2.5rem;
+  font-weight: 300;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.glass-num.is-gradient {
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- BUTTONS ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out-quart);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--grad-primary);
+  color: white;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+
+.btn-primary:hover { transform: scale(1.02); box-shadow: 0 8px 30px rgba(99, 102, 241, 0.6); }
+.btn-primary:hover::before { opacity: 1; }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink-1);
+  border: 1px solid var(--border-1);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-3);
+  border-color: var(--border-2);
+  transform: scale(1.02);
+}
+
+.btn-soft {
+  background: var(--bg-3);
+  color: var(--ink-1);
+}
+
+.btn-soft:hover { background: var(--bg-4); transform: scale(1.02); }
+
+/* ---------- PILLS ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.pill-soft { background: var(--bg-3); color: var(--ink-2); }
+.pill-ok { background: rgba(34, 197, 94, 0.15); color: var(--green); border: 1px solid rgba(34, 197, 94, 0.3); }
+.pill-warn { background: rgba(245, 158, 11, 0.15); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+.pill-err { background: rgba(244, 63, 94, 0.15); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+
+/* ---------- SECTIONS ---------- */
+.section {
+  margin: 5rem 0;
+}
+
+.section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.section-head .eyebrow { display: inline-flex; }
+
+.section-title {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-top: 0.5rem;
+  max-width: 720px;
+}
+
+.section-title .italic-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- GRIDS ---------- */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+.grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
+
+@media (max-width: 1024px) {
+  .grid-4, .grid-6 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { position: relative; height: auto; }
+  .main { padding: 1.5rem; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 0 6rem;
+  position: relative;
+}
+
+.hero .eyebrow { margin-bottom: 1.5rem; }
+
+.hero-title {
+  font-family: var(--font-sans);
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 200;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  margin-bottom: 1.5rem;
+  max-width: 1100px;
+}
+
+.hero-title .italic-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 300;
+  background: var(--grad-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.02em;
+  display: inline-block;
+  transition: transform var(--dur-base) var(--ease-out-quart);
+}
+
+.hero-title .italic-serif:hover { transform: scale(1.04) rotate(-1deg); }
+
+.hero-sub {
+  font-size: 1.15rem;
+  color: var(--ink-2);
+  max-width: 560px;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+/* ---------- MARQUEE ---------- */
+.marquee {
+  overflow: hidden;
+  border-top: 1px solid var(--border-1);
+  border-bottom: 1px solid var(--border-1);
+  padding: 1rem 0;
+  margin: 4rem -3rem;
+  position: relative;
+  mask-image: linear-gradient(90deg, transparent, black 10%, black 90%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  gap: 3rem;
+  animation: marquee 40s linear infinite;
+  white-space: nowrap;
+  width: max-content;
+}
+
+.marquee-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+
+.marquee-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--indigo);
+  box-shadow: 0 0 8px var(--indigo);
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ---------- SWATCHES ---------- */
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+
+.swatch {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  border: 1px solid var(--border-1);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.swatch-name { color: white; font-weight: 500; }
+.swatch-hex { color: rgba(255,255,255,0.7); margin-top: 0.15rem; }
+
+.swatch.indigo { background: var(--indigo); }
+.swatch.magenta { background: var(--magenta); }
+.swatch.teal { background: var(--teal); }
+.swatch.amber { background: var(--amber); }
+.swatch.rose { background: var(--rose); }
+.swatch.green { background: var(--green); }
+.swatch.bg0 { background: var(--bg-0); }
+.swatch.bg1 { background: var(--bg-1); }
+
+/* ---------- TYPE SPECIMEN ---------- */
+.type-spec { display: flex; flex-direction: column; gap: 1.5rem; padding: 1rem 0; }
+.type-row { display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; align-items: baseline; padding: 1rem 0; border-bottom: 1px solid var(--border-1); }
+.type-label { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-3); }
+.type-sample-display { font-family: var(--font-serif); font-weight: 300; font-size: 3.5rem; line-height: 1; letter-spacing: -0.04em; }
+.type-sample-display .italic { font-style: italic; background: var(--grad-text); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.type-sample-h1 { font-size: 2.5rem; font-weight: 300; letter-spacing: -0.03em; }
+.type-sample-h2 { font-size: 1.5rem; font-weight: 500; }
+.type-sample-body { font-size: 1rem; }
+.type-sample-small { font-size: 0.875rem; color: var(--ink-2); }
+.type-sample-micro { font-size: 0.75rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.12em; }
+
+/* ---------- TAB PREVIEW ---------- */
+.tab-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.tab-preview {
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all var(--dur-base);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), transparent);
+  opacity: 0;
+  transition: opacity var(--dur-base);
+}
+
+.tab-preview:hover { border-color: var(--border-2); transform: translateY(-3px); }
+.tab-preview:hover::before { opacity: 1; }
+
+.tab-preview-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  margin-bottom: 0.5rem;
+}
+
+.tab-preview-name {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  position: relative;
+}
+
+.tab-preview-name .italic-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.tab-preview-desc {
+  font-size: 0.8rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+  position: relative;
+}
+
+/* ---------- DEMO: Pomodoro ---------- */
+.pomo-demo {
+  display: grid;
+  place-items: center;
+  padding: 2rem 0;
+}
+
+.pomo-ring {
+  width: 280px;
+  height: 280px;
+  position: relative;
+}
+
+.pomo-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.pomo-ring circle { fill: none; stroke-width: 8; }
+.pomo-ring .track { stroke: var(--bg-3); }
+.pomo-ring .progress { stroke: url(#pomoGrad); stroke-linecap: round; transition: stroke-dashoffset 1s linear; filter: drop-shadow(0 0 12px rgba(99,102,241,0.4)); }
+.pomo-time {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-family: var(--font-serif); font-size: 3.5rem; font-weight: 300; letter-spacing: -0.04em;
+}
+
+.pomo-modes { display: flex; gap: 0.5rem; margin-top: 1.5rem; justify-content: center; }
+.pomo-mode { padding: 0.4rem 0.9rem; border-radius: 999px; font-size: 0.75rem; cursor: pointer; transition: all 200ms; background: var(--bg-2); border: 1px solid var(--border-1); color: var(--ink-2); }
+.pomo-mode.active { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.4); color: var(--ink-1); }
+
+/* ---------- DEMO: Flashcard ---------- */
+.card-demo {
+  perspective: 1200px;
+  width: 100%;
+  max-width: 460px;
+  margin: 2rem auto;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  transition: transform 0.8s var(--ease-out-expo);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.card-demo.flipped .card-inner { transform: rotateY(180deg); }
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  text-align: center;
+  background: var(--bg-2);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-1);
+  border-radius: 16px;
+  font-size: 1.4rem;
+  font-family: var(--font-serif);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+.card-face.back { transform: rotateY(180deg); background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(217,70,239,0.05)); }
+
+/* ---------- DEMO: Quiz ---------- */
+.quiz-demo { max-width: 640px; margin: 0 auto; }
+.quiz-q { font-size: 1.5rem; font-weight: 300; letter-spacing: -0.02em; margin-bottom: 1.5rem; }
+.quiz-opt {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1.25rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  margin-bottom: 0.6rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--ink-1);
+  transition: all 200ms var(--ease-out-quart);
+  font-family: var(--font-sans);
+}
+.quiz-opt:hover { background: var(--bg-3); border-color: var(--border-2); transform: translateX(4px); }
+.quiz-opt.correct { background: rgba(34, 197, 94, 0.1); border-color: var(--green); }
+
+/* ---------- DEMO: Dropzone ---------- */
+.dropzone-demo {
+  border: 2px dashed var(--border-2);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--bg-2);
+  transition: all 300ms;
+  cursor: pointer;
+}
+.dropzone-demo:hover { border-color: var(--indigo); background: rgba(99, 102, 241, 0.05); }
+.dropzone-demo .big { font-size: 1.5rem; font-weight: 300; margin-bottom: 0.5rem; }
+.dropzone-demo .small { color: var(--ink-3); font-size: 0.85rem; }
+
+/* ---------- DEMO: Kanban ---------- */
+.kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+.kanban-col {
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 1rem;
+  min-height: 240px;
+}
+.kanban-col h4 { font-family: var(--font-serif); font-style: italic; font-weight: 400; font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--ink-2); }
+.kanban-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  cursor: grab;
+  transition: all 200ms;
+}
+.kanban-card:hover { transform: translateY(-2px); border-color: var(--border-2); }
+.kanban-tag { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
+
+/* ---------- INPUT ---------- */
+.input-demo {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  color: var(--ink-1);
+  font-size: 0.95rem;
+  font-family: var(--font-sans);
+  transition: all 200ms;
+}
+.input-demo:focus { outline: none; border-color: transparent; box-shadow: 0 0 0 2px var(--indigo), 0 0 0 4px rgba(217, 70, 239, 0.4); background: var(--bg-3); }
+
+/* ---------- FOOTER ---------- */
+.footer {
+  margin-top: 8rem;
+  padding: 2rem 0;
+  border-top: 1px solid var(--border-1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+
+@media (max-width: 768px) {
+  .footer { flex-direction: column; gap: 1rem; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="aurora-bg"></div>
+<div class="orb orb--1"></div>
+<div class="orb orb--2"></div>
+<div class="orb orb--3"></div>
+<div class="orb orb--4"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<div class="app">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Mission Control</div>
+        <div class="brand-ver">v2.0 · AURORA</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Workspace</div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        Overview
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Briefing
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        Agents
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Study</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Library
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Research
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        Practice
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Plan</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Schedule
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Tasks
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Focus
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Knowledge</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Notebook
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Obsidian
+      </div>
+    </div>
+
+    <div class="gateway">
+      <span class="status-dot"></span>
+      <span>Gateway Online</span>
+    </div>
+  </aside>
+
+  <!-- ========== MAIN ========== -->
+  <main class="main">
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="eyebrow reveal" style="--i:0">Design Reference · v2.0</div>
+      <h1 class="hero-title reveal" style="--i:1">
+        Mission Control.<br>
+        <span class="italic-serif">The Aurora</span> design language.
+      </h1>
+      <p class="hero-sub reveal" style="--i:2">
+        A complete visual specification for the redesigned dashboard. Aurora background, glassmorphism, scroll-triggered motion, editorial typography. Eighteen tabs, one design system.
+      </p>
+      <div class="hero-actions reveal" style="--i:3">
+        <button class="btn btn-primary" onclick="document.getElementById('system').scrollIntoView({behavior:'smooth'})">
+          See the system
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn btn-ghost" onclick="document.getElementById('tabs').scrollIntoView({behavior:'smooth'})">
+          Browse the 18 tabs
+        </button>
+      </div>
+    </section>
+
+    <!-- MARQUEE -->
+    <div class="marquee reveal" style="--i:0">
+      <div class="marquee-track">
+        <div class="marquee-item"><span class="dot"></span>Scholar finished: chapter 4 notes</div>
+        <div class="marquee-item"><span class="dot" style="background:var(--magenta);box-shadow:0 0 8px var(--magenta)"></span>Quizmaster generated 12 MCQs</div>
+        <div class="marquee-item"><span class="dot" style="background:var(--teal);box-shadow:0 0 8px var(--teal)"></span>Vault logged new file: linear-algebra.pdf</div>
+        <div class="marquee-item"><span class="dot"></span>Scholar finished: chapter 4 notes</div>
+        <div class="marquee-item"><span class="dot" style="background:var(--magenta);box-shadow:0 0 8px var(--magenta)"></span>Quizmaster generated 12 MCQs</div>
+        <div class="marquee-item"><span class="dot" style="background:var(--teal);box-shadow:0 0 8px var(--teal)"></span>Vault logged new file: linear-algebra.pdf</div>
+      </div>
+    </div>
+
+    <!-- SECTION: THE 18 TABS -->
+    <section class="section" id="tabs">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">Coverage</div>
+          <h2 class="section-title">Every tab. <span class="italic-serif">Designed.</span></h2>
+        </div>
+        <p class="page-sub" style="max-width:380px;text-align:right">
+          The dashboard has 18 sub-tabs across 5 top-level destinations. This is the visual brief for each one.
+        </p>
+      </div>
+
+      <div class="tab-preview-grid">
+        <div class="tab-preview reveal" style="--i:0">
+          <div class="tab-preview-num">01 / WORKSPACE</div>
+          <div class="tab-preview-name">Overview</div>
+          <p class="tab-preview-desc">Mission status. Hero treatment with date in italic serif, 4 metric tiles with count-up, pipeline status, marquee of recent activity.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:1">
+          <div class="tab-preview-num">02 / WORKSPACE</div>
+          <div class="tab-preview-name">Briefing</div>
+          <p class="tab-preview-desc">Editorial. Single-column centered body text in display type, 6 quick-action cards, recent activity as vertical timeline.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:2">
+          <div class="tab-preview-num">03 / WORKSPACE</div>
+          <div class="tab-preview-name">Agents</div>
+          <p class="tab-preview-desc">6 agent cards in a row, 3 stat cards, large activity heatmap, collapsible "Run agent" panel on the right.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:3">
+          <div class="tab-preview-num">04 / WORKSPACE</div>
+          <div class="tab-preview-name">Chat</div>
+          <p class="tab-preview-desc">Distraction-free. Centered message stream max-width 800px, assistant messages in glass cards, sticky input at bottom.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:4">
+          <div class="tab-preview-num">05 / STUDY</div>
+          <div class="tab-preview-name">Upload</div>
+          <p class="tab-preview-desc">Hero dropzone with animated pipeline diagram, subject picker, options toggles, recent runs with progress bars.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:5">
+          <div class="tab-preview-num">06 / STUDY</div>
+          <div class="tab-preview-name">Library · Notes</div>
+          <p class="tab-preview-desc">3-pane reading. Subject sidebar, note list with search, markdown reader with sticky TOC.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:6">
+          <div class="tab-preview-num">07 / STUDY</div>
+          <div class="tab-preview-name">Library · Lecture Notes</div>
+          <p class="tab-preview-desc">Media-first. Lecture grid, vertical timeline with topic segments, synchronized transcript pane.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:7">
+          <div class="tab-preview-num">08 / STUDY</div>
+          <div class="tab-preview-name">Research</div>
+          <p class="tab-preview-desc">Editorial + operational. New research form, history as cards, findings view with claims and sources.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:8">
+          <div class="tab-preview-num">09 / STUDY</div>
+          <div class="tab-preview-name">Practice · Quiz</div>
+          <p class="tab-preview-desc">Focused. One question at a time, 4 option cards, instant feedback with correct/incorrect glow, explanation panel.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:9">
+          <div class="tab-preview-num">10 / STUDY</div>
+          <div class="tab-preview-name">Practice · Flashcards</div>
+          <p class="tab-preview-desc">3D card flip on click/space, 4 difficulty buttons, deck info, current streak.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:10">
+          <div class="tab-preview-num">11 / PLAN</div>
+          <div class="tab-preview-name">Schedule</div>
+          <p class="tab-preview-desc">Calendar-table elegant. 3 tables: Today's classes, Weekly schedule, Exams. Today highlighted with gradient bar.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:11">
+          <div class="tab-preview-num">12 / PLAN</div>
+          <div class="tab-preview-name">Tasks</div>
+          <p class="tab-preview-desc">Kanban. 3 columns with italic-serif headers, draggable cards, drop targets glow on hover, color tags.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:12">
+          <div class="tab-preview-num">13 / PLAN</div>
+          <div class="tab-preview-name">Focus</div>
+          <p class="tab-preview-desc">Meditative. 2-pane: large Pomodoro ring with mode color, 6 draggable sticky notes.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:13">
+          <div class="tab-preview-num">14 / KNOWLEDGE</div>
+          <div class="tab-preview-name">Notebook</div>
+          <p class="tab-preview-desc">Card grid of notebooks. Name, source count, last activity, health indicator. Health banner at top.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:14">
+          <div class="tab-preview-num">15 / KNOWLEDGE</div>
+          <div class="tab-preview-name">Notebook · Chat</div>
+          <p class="tab-preview-desc">RAG Q&A. Message stream with clickable citation chips, scope toggles in sidebar, source panel.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:15">
+          <div class="tab-preview-num">16 / KNOWLEDGE</div>
+          <div class="tab-preview-name">Obsidian · Vault</div>
+          <p class="tab-preview-desc">3-pane. Vault tree, file list, markdown reader with internal link highlighting, backlinks.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:16">
+          <div class="tab-preview-num">17 / KNOWLEDGE</div>
+          <div class="tab-preview-name">Obsidian · Search</div>
+          <p class="tab-preview-desc">Search-first. Large display-type input, results list with highlighted match line, recent searches empty state.</p>
+        </div>
+        <div class="tab-preview reveal" style="--i:17">
+          <div class="tab-preview-num">18 / SYSTEM</div>
+          <div class="tab-preview-name">Design Reference</div>
+          <p class="tab-preview-desc">This tab. Visual source of truth. Tokens, components, examples. Drop-zone to upload new references.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: THE DESIGN SYSTEM -->
+    <section class="section" id="system">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">The System</div>
+          <h2 class="section-title">Colors. <span class="italic-serif">Type.</span> Motion.</h2>
+        </div>
+      </div>
+
+      <!-- COLORS -->
+      <div class="reveal" style="--i:0">
+        <div class="glass-eyebrow">Color · Accent</div>
+        <div class="swatch-grid" style="margin-top:0.75rem">
+          <div class="swatch indigo"><div class="swatch-name">Indigo</div><div class="swatch-hex">#6366f1</div></div>
+          <div class="swatch magenta"><div class="swatch-name">Magenta</div><div class="swatch-hex">#d946ef</div></div>
+          <div class="swatch teal"><div class="swatch-name">Teal</div><div class="swatch-hex">#14b8a6</div></div>
+          <div class="swatch amber"><div class="swatch-name">Amber</div><div class="swatch-hex">#f59e0b</div></div>
+          <div class="swatch rose"><div class="swatch-name">Rose</div><div class="swatch-hex">#f43f5e</div></div>
+          <div class="swatch green"><div class="swatch-name">Green</div><div class="swatch-hex">#22c55e</div></div>
+        </div>
+      </div>
+
+      <div class="reveal" style="--i:1; margin-top:1.25rem">
+        <div class="glass-eyebrow">Color · Surface</div>
+        <div class="swatch-grid" style="margin-top:0.75rem">
+          <div class="swatch bg0"><div class="swatch-name" style="color:var(--ink-1)">Base</div><div class="swatch-hex" style="color:var(--ink-3)">#0a0a0f</div></div>
+          <div class="swatch bg1"><div class="swatch-name" style="color:var(--ink-1)">Sidebar</div><div class="swatch-hex" style="color:var(--ink-3)">#11111a</div></div>
+        </div>
+      </div>
+
+      <!-- TYPE -->
+      <div class="reveal glass" style="--i:2;margin-top:2rem">
+        <div class="glass-eyebrow">Typography</div>
+        <div class="type-spec">
+          <div class="type-row">
+            <div class="type-label">Display XL · 5rem<br>Fraunces 300</div>
+            <div class="type-sample-display">The <span class="italic">fourteenth</span> of June.</div>
+          </div>
+          <div class="type-row">
+            <div class="type-label">Display L · 3rem<br>Inter 300</div>
+            <div class="type-sample-h1">Today's <span class="italic-serif">briefing.</span></div>
+          </div>
+          <div class="type-row">
+            <div class="type-label">H2 · 1.5rem<br>Inter 500</div>
+            <div class="type-sample-h2">Section header</div>
+          </div>
+          <div class="type-row">
+            <div class="type-label">Body · 1rem<br>Inter 400</div>
+            <div class="type-sample-body">The quick brown fox jumps over the lazy dog. 0123456789</div>
+          </div>
+          <div class="type-row">
+            <div class="type-label">Small · 0.875rem</div>
+            <div class="type-sample-small">Secondary metadata and labels</div>
+          </div>
+          <div class="type-row">
+            <div class="type-label">Micro · 0.75rem<br>UPPERCASE</div>
+            <div class="type-sample-micro">Eyebrow · Metadata</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: COMPONENTS -->
+    <section class="section">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">Library</div>
+          <h2 class="section-title">Components. <span class="italic-serif">In motion.</span></h2>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="reveal glass" style="--i:0">
+        <div class="glass-eyebrow">Buttons</div>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1rem">
+          <button class="btn btn-primary">Run Scholar</button>
+          <button class="btn btn-ghost">Cancel</button>
+          <button class="btn btn-soft">Save draft</button>
+          <button class="btn btn-primary">Generate quiz <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;align-items:center">
+          <span class="pill pill-ok"><span class="status-dot" style="width:6px;height:6px;background:var(--green)"></span> Active</span>
+          <span class="pill pill-warn">Idle</span>
+          <span class="pill pill-err">Error</span>
+          <span class="pill pill-soft">Draft</span>
+        </div>
+      </div>
+
+      <!-- Inputs -->
+      <div class="reveal glass" style="--i:1;margin-top:1.25rem">
+        <div class="glass-eyebrow">Inputs</div>
+        <input class="input-demo" style="margin-top:0.75rem" placeholder="Search notes, tasks, agents…" />
+        <input class="input-demo" style="margin-top:0.5rem" value="linear-algebra-chapter-4.pdf" />
+      </div>
+
+      <!-- Metric cards -->
+      <div class="reveal" style="--i:2;margin-top:1.25rem">
+        <div class="glass-eyebrow">Metric tiles · count-up on scroll</div>
+        <div class="grid-4" style="margin-top:0.75rem">
+          <div class="glass">
+            <div class="glass-eyebrow">Subjects</div>
+            <div class="glass-num is-gradient" data-count="6">0</div>
+            <div class="glass-title" style="font-size:0.85rem;color:var(--ink-2);font-weight:400;margin-top:0.5rem">Active</div>
+          </div>
+          <div class="glass">
+            <div class="glass-eyebrow">Note files</div>
+            <div class="glass-num" data-count="142">0</div>
+            <div class="glass-title" style="font-size:0.85rem;color:var(--ink-2);font-weight:400;margin-top:0.5rem">Generated by Scholar</div>
+          </div>
+          <div class="glass">
+            <div class="glass-eyebrow">Quizzes</div>
+            <div class="glass-num is-gradient" data-count="38">0</div>
+            <div class="glass-title" style="font-size:0.85rem;color:var(--ink-2);font-weight:400;margin-top:0.5rem">MCQ decks</div>
+          </div>
+          <div class="glass">
+            <div class="glass-eyebrow">Agent tasks</div>
+            <div class="glass-num" data-count="1247">0</div>
+            <div class="glass-title" style="font-size:0.85rem;color:var(--ink-2);font-weight:400;margin-top:0.5rem">Last 24 hours</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pomodoro demo -->
+      <div class="reveal glass" style="--i:3;margin-top:1.25rem">
+        <div class="glass-eyebrow">Pomodoro ring · color matches mode</div>
+        <div class="pomo-demo">
+          <div class="pomo-ring">
+            <svg viewBox="0 0 100 100">
+              <defs>
+                <linearGradient id="pomoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#d946ef"/>
+                </linearGradient>
+              </defs>
+              <circle class="track" cx="50" cy="50" r="44"/>
+              <circle class="progress" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="82"/>
+            </svg>
+            <div class="pomo-time">17:38</div>
+          </div>
+          <div class="pomo-modes">
+            <div class="pomo-mode active">Focus · 25m</div>
+            <div class="pomo-mode">Short · 5m</div>
+            <div class="pomo-mode">Long · 15m</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flashcard demo -->
+      <div class="reveal glass" style="--i:4;margin-top:1.25rem">
+        <div class="glass-eyebrow">Flashcard · 3D flip on click</div>
+        <div class="card-demo" id="cardDemo" onclick="this.classList.toggle('flipped')">
+          <div class="card-inner">
+            <div class="card-face front">What is a <span class="italic-serif" style="background:var(--grad-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">linear transformation</span>?</div>
+            <div class="card-face back">A mapping between vector spaces that preserves vector addition and scalar multiplication.</div>
+          </div>
+        </div>
+        <p style="text-align:center;color:var(--ink-3);font-size:0.8rem;margin-top:0.5rem">Click to flip · Space to flip · ← → to navigate</p>
+      </div>
+
+      <!-- Quiz demo -->
+      <div class="reveal glass" style="--i:5;margin-top:1.25rem">
+        <div class="glass-eyebrow">Quiz · one question, four options</div>
+        <div class="quiz-demo" style="margin-top:1rem">
+          <div class="quiz-q">What is the rank of a 3×3 identity matrix?</div>
+          <button class="quiz-opt" onclick="this.classList.add('correct');this.parentElement.querySelectorAll('.quiz-opt').forEach(o=>o.style.pointerEvents='none')">3</button>
+          <button class="quiz-opt" onclick="this.style.pointerEvents='none'">0</button>
+          <button class="quiz-opt" onclick="this.style.pointerEvents='none'">1</button>
+          <button class="quiz-opt" onclick="this.style.pointerEvents='none'">9</button>
+        </div>
+      </div>
+
+      <!-- Dropzone demo -->
+      <div class="reveal glass" style="--i:6;margin-top:1.25rem">
+        <div class="glass-eyebrow">Dropzone · upload intake</div>
+        <div class="dropzone-demo" style="margin-top:0.75rem">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 0.75rem;display:block;color:var(--indigo)"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="big">Drop a file or click to choose</div>
+          <div class="small">PDF · DOCX · MD · TXT · PPTX · up to 50MB</div>
+        </div>
+      </div>
+
+      <!-- Kanban demo -->
+      <div class="reveal glass" style="--i:7;margin-top:1.25rem">
+        <div class="glass-eyebrow">Tasks board · drag and drop</div>
+        <div class="kanban" style="margin-top:0.75rem">
+          <div class="kanban-col">
+            <h4>To Do</h4>
+            <div class="kanban-card"><span class="kanban-tag" style="background:var(--amber)"></span>Review chapter 4 notes</div>
+            <div class="kanban-card"><span class="kanban-tag" style="background:var(--rose)"></span>Practice quiz: eigenvalues</div>
+          </div>
+          <div class="kanban-col">
+            <h4>In Progress</h4>
+            <div class="kanban-card"><span class="kanban-tag" style="background:var(--indigo)"></span>Scholar running on file 2</div>
+          </div>
+          <div class="kanban-col">
+            <h4>Done</h4>
+            <div class="kanban-card"><span class="kanban-tag" style="background:var(--green)"></span>Schedule final review</div>
+            <div class="kanban-card"><span class="kanban-tag" style="background:var(--teal)"></span>Flashcard deck: chapter 3</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: PILLARS -->
+    <section class="section">
+      <div class="section-head reveal">
+        <div>
+          <div class="eyebrow">Philosophy</div>
+          <h2 class="section-title">Five pillars. <span class="italic-serif">One language.</span></h2>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="glass reveal" style="--i:0">
+          <div class="glass-eyebrow">Pillar 01</div>
+          <div class="glass-title">Aurora background</div>
+          <p style="color:var(--ink-2);font-size:0.9rem;line-height:1.6">Living background. Mesh gradient + drifting orbs + grain. Never a flat color. The background is the brand.</p>
+        </div>
+        <div class="glass reveal" style="--i:1">
+          <div class="glass-eyebrow">Pillar 02</div>
+          <div class="glass-title">Glassmorphism</div>
+          <p style="color:var(--ink-2);font-size:0.9rem;line-height:1.6">Every surface is glass. Backdrop blur, low-opacity backgrounds, hairline borders. Nothing is solid.</p>
+        </div>
+        <div class="glass reveal" style="--i:2">
+          <div class="glass-eyebrow">Pillar 03</div>
+          <div class="glass-title">Editorial typography</div>
+          <p style="color:var(--ink-2);font-size:0.9rem;line-height:1.6">Two type families. Fraunces italic for emphasis. Inter for everything else. Generous, breathing whitespace.</p>
+        </div>
+        <div class="glass reveal" style="--i:3">
+          <div class="glass-eyebrow">Pillar 04</div>
+          <div class="glass-title">Scroll-triggered motion</div>
+          <p style="color:var(--ink-2);font-size:0.9rem;line-height:1.6">Content reveals as you scroll. IntersectionObserver + ease-out-expo. Counters animate. Orbs parallax.</p>
+        </div>
+        <div class="glass reveal" style="--i:4">
+          <div class="glass-eyebrow">Pillar 05</div>
+          <div class="glass-title">Micro-interactions</div>
+          <p style="color:var(--ink-2);font-size:0.9rem;line-height:1.6">Every interactive element responds. Hover, focus, active. No dead UI. Magnetic buttons, gradient rings, pulsing dots.</p>
+        </div>
+        <div class="glass reveal" style="--i:5">
+          <div class="glass-eyebrow">Constraint</div>
+          <div class="glass-title">No build step</div>
+          <p style="color:var(--ink-2);font-size:0.9rem;line-height:1.6">Alpine.js + vanilla CSS. Self-hosted fonts. Zero runtime CDN. Premium feel without premium tooling.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer reveal">
+      <div>Mission Control · Aurora Design Reference · v2.0</div>
+      <div>Built for the redesign brief · 2026-06-14</div>
+    </footer>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// SCROLL REVEAL
+// ============================================================
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('is-visible');
+
+      // Count-up animation for stat numbers
+      if (e.target.matches('.glass') && e.target.querySelector('.glass-num[data-count]')) {
+        const num = e.target.querySelector('.glass-num[data-count]');
+        if (num.dataset.counted) return;
+        num.dataset.counted = '1';
+        const target = parseFloat(num.dataset.count);
+        const dur = 1500;
+        const start = performance.now();
+        const step = (now) => {
+          const t = Math.min((now - start) / dur, 1);
+          const eased = 1 - Math.pow(1 - t, 4);
+          num.textContent = Math.round(target * eased).toLocaleString();
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
+
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// ============================================================
+// SCROLL PROGRESS + PARALLAX ORBS
+// ============================================================
+const progress = document.getElementById('scrollProgress');
+const orbs = document.querySelectorAll('.orb');
+
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const h = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = (y / h) * 100;
+  progress.style.width = pct + '%';
+
+  orbs.forEach((orb, i) => {
+    const speed = 0.15 + (i * 0.05);
+    orb.style.transform = `translateY(${y * speed}px)`;
+  });
+}, { passive: true });
+
+// ============================================================
+// FLASHCARD: Space to flip
+// ============================================================
+const cardDemo = document.getElementById('cardDemo');
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+    if (cardDemo) {
+      e.preventDefault();
+      cardDemo.classList.toggle('flipped');
+    }
+  }
+});
+</script>
+
+</body>
+</html>

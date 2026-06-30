@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<!--
+  Lecture Notes viewer — wraps the prebuilt PDF.js viewer with a save
+  bridge that persists annotations back to the dashboard API.
+-->
+<html dir="ltr" mozdisallowselectionprint>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Lecture PDF.js Viewer</title>
+
+  <link rel="stylesheet" href="viewer.css">
+
+  <style>
+    #lectureToolbar {
+      position: sticky; top: 0; z-index: 5;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      background: rgba(6, 7, 13, .88);
+      border-bottom: 1px solid var(--lecture-border, rgba(255,255,255,.08));
+      backdrop-filter: blur(8px);
+    }
+    #lectureToolbar .lt-spacer { flex: 1; }
+    #lectureToolbar .lt-status {
+      font-size: 11px; font-weight: 700; letter-spacing: .35px;
+      color: var(--text-2, #8891aa); padding: 4px 8px;
+      border-radius: 999px; border: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.028);
+    }
+    #lectureToolbar .lt-status.saving { color: #f97316; border-color: rgba(249,115,22,.3); }
+    #lectureToolbar .lt-status.ok     { color: #22c55e; border-color: rgba(34,197,94,.3); }
+    #lectureToolbar .lt-status.bad    { color: #f43f5e; border-color: rgba(244,63,94,.3); }
+    #lectureToolbar button.lt-btn {
+      font-family: var(--font, system-ui, -apple-system, sans-serif);
+      font-size: 12px; font-weight: 800; letter-spacing: .3px;
+      padding: 7px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(249,115,22,.3);
+      background: linear-gradient(135deg, rgba(249,115,22,.16), rgba(249,115,22,.04));
+      color: #f97316;
+      cursor: pointer;
+      transition: all .15s ease;
+    }
+    #lectureToolbar button.lt-btn:hover {
+      background: linear-gradient(135deg, rgba(249,115,22,.28), rgba(249,115,22,.08));
+      box-shadow: 0 0 18px rgba(249,115,22,.18);
+    }
+    #lectureToolbar button.lt-btn.ghost {
+      border-color: rgba(255,255,255,.1);
+      background: rgba(255,255,255,.03);
+      color: var(--text-2, #8891aa);
+    }
+  </style>
+</head>
+<body tabindex="1" class="loadingInProgress">
+  <div id="lectureToolbar">
+    <span id="ltFileName" class="lt-status">Loading…</span>
+    <span class="lt-spacer"></span>
+    <button type="button" class="lt-btn ghost" id="ltReload" title="Reload PDF">↻ Reload</button>
+    <button type="button" class="lt-btn" id="ltSave" title="Save annotations back to file">💾 Save</button>
+    <span id="ltStatus" class="lt-status">Idle</span>
+  </div>
+
+  <!-- Everything below is copied verbatim from PDF.js's prebuilt viewer.html
+       so the official viewer renders normally. viewer.mjs auto-runs and
+       renders the PDF; the save bridge hooks in after `webviewerloaded`. -->
+  <div id="outerContainer">
+
+    <div id="sidebarContainer">
+      <div id="toolbarSidebar">
+        <div class="splitToolbarButton toggled">
+          <button id="viewThumbnail" class="toolbarButton toggled" title="Show Thumbnails" tabindex="2" data-l10n-id="thumbs">
+            <span data-l10n-id="thumbs_label">Thumbnails</span>
+          </button>
+          <button id="viewOutline" class="toolbarButton" title="Show Document Outline (double-click to expand/collapse all items)" tabindex="3" data-l10n-id="document_outline">
+            <span data-l10n-id="document_outline_label">Document Outline</span>
+          </button>
+          <button id="viewAttachments" class="toolbarButton" title="Show Attachments" tabindex="4" data-l10n-id="attachments">
+            <span data-l10n-id="attachments_label">Attachments</span>
+          </button>
+          <button id="viewLayers" class="toolbarButton" title="Show Layers (double-click to reset all layers to the default state)" tabindex="5" data-l10n-id="layers">
+            <span data-l10n-id="layers_label">Layers</span>
+          </button>
+        </div>
+      </div>
+      <div id="sidebarContent">
+        <div id="thumbnailView"></div>
+        <div id="outlineView" class="hidden"></div>
+        <div id="attachmentsView" class="hidden"></div>
+        <div id="layersView" class="hidden"></div>
+      </div>
+    </div>  <!-- sidebarContainer -->
+
+    <div id="mainContainer">
+      <div class="findbar hidden doorHanger" id="findbar">
+        <div id="findbarInputContainer">
+          <input id="findInput" class="toolbarField" title="Find" placeholder="Find in document…" tabindex="91" data-l10n-id="find_input" aria-invalid="false">
+          <div class="splitToolbarButton">
+            <button id="findPrevious" class="toolbarButton findPrevious" title="Find the previous occurrence of the phrase" tabindex="92" data-l10n-id="find_previous">
+              <span data-l10n-id="find_previous_label">Previous</span>
+            </button>
+            <div class="splitToolbarButtonSeparator"></div>
+            <button id="findNext" class="toolbarButton findNext" title="Find the next occurrence of the phrase" tabindex="93" data-l10n-id="find_next">
+              <span data-l10n-id="find_next_label">Next</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="findbarOptionsOneContainer">
+          <input type="checkbox" id="findHighlightAll" class="toolbarField" tabindex="94">
+          <label for="findHighlightAll" class="toolbarLabel" data-l10n-id="find_highlight">Highlight all</label>
+          <input type="checkbox" id="findMatchCase" class="toolbarField" tabindex="95">
+          <label for="findMatchCase" class="toolbarLabel" data-l10n-id="find_match_case">Match case</label>
+          <input type="checkbox" id="findEntireWord" class="toolbarField" tabindex="96">
+          <label for="findEntireWord" class="toolbarLabel" data-l10n-id="find_entire_word">Whole words</label>
+        </div>
+
+        <div id="findbarOptionsTwoContainer">
+          <input type="checkbox" id="findMatchDiacritics" class="toolbarField" tabindex="97">
+          <label for="findMatchDiacritics" class="toolbarLabel" data-l10n-id="find_match_diacritics">Match diacritics</label>
+          <input type="checkbox" id="findMatchShade" class="toolbarField" tabindex="98">
+          <label for="findMatchShade" class="toolbarLabel" data-l10n-id="find_match_shade">Match shades</label>
+        </div>
+
+        <div id="findbarMessageContainer" aria-live="polite">
+          <span id="findResultsCount" class="toolbarLabel"></span>
+          <span id="findMsg" class="toolbarLabel"></span>
+        </div>
+      </div>  <!-- findbar -->
+
+      <div class="editorParamsToolbar hidden doorHangerRight" id="editorParamsToolbar">
+        <div id="editorFreeTextParamsToolbar" class="editorParamsToolbarContainer hidden">
+          <input id="editorFreeTextColor" type="color" tabindex="100">
+          <input id="editorFreeTextFontSize" type="range" min="5" max="100" step="1" tabindex="101">
+          <label for="editorFreeTextFontSize" data-l10n-id="editor_free_text_size">Size</label>
+        </div>
+        <div id="editorInkParamsToolbar" class="editorParamsToolbarContainer hidden">
+          <input id="editorInkColor" type="color" tabindex="102">
+          <input id="editorInkThickness" type="range" min="1" max="20" step="1" tabindex="103">
+          <label for="editorInkThickness" data-l10n-id="editor_ink_thickness">Thickness</label>
+          <input id="editorInkOpacity" type="range" min="1" max="100" step="1" tabindex="104">
+          <label for="editorInkOpacity" data-l10n-id="editor_ink_opacity">Opacity</label>
+        </div>
+        <div id="editorStampParamsToolbar" class="editorParamsToolbarContainer hidden">
+          <button id="editorStampAddImage" class="secondaryToolbarButton" title="Add image" tabindex="105" data-l10n-id="editor_stamp_add_image">
+            <span data-l10n-id="editor_stamp_add_image_label">Add image</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="secondaryToolbar" class="secondaryToolbar hidden doorHangerRight">
+        <div id="secondaryToolbarButtonContainer">
+          <button id="secondaryPresentationMode" class="secondaryToolbarButton presentationMode" title="Switch to Presentation Mode" tabindex="51" data-l10n-id="presentation_mode">
+            <span data-l10n-id="presentation_mode_label">Presentation Mode</span>
+          </button>
+          <button id="secondaryOpenFile" class="secondaryToolbarButton openFile" title="Open File" tabindex="52" data-l10n-id="open_file">
+            <span data-l10n-id="open_file_label">Open File</span>
+          </button>
+          <button id="secondaryPrint" class="secondaryToolbarButton print" title="Print" tabindex="53" data-l10n-id="print">
+            <span data-l10n-id="print_label">Print</span>
+          </button>
+          <button id="secondaryDownload" class="secondaryToolbarButton download" title="Download" tabindex="54" data-l10n-id="download">
+            <span data-l10n-id="download_label">Download</span>
+          </button>
+          <a href="#viewBookmark=page" id="secondaryViewBookmark" class="secondaryToolbarButton bookmark" title="Current view (copy or open in new tab)" tabindex="55" data-l10n-id="bookmark">
+            <span data-l10n-id="bookmark_label">Current View</span>
+          </a>
+          <div class="horizontalToolbarSeparator"></div>
+          <button id="firstPage" class="secondaryToolbarButton firstPage" title="Go to First Page" tabindex="56" data-l10n-id="first_page">
+            <span data-l10n-id="first_page_label">Go to First Page</span>
+          </button>
+          <button id="lastPage" class="secondaryToolbarButton lastPage" title="Go to Last Page" tabindex="57" data-l10n-id="last_page">
+            <span data-l10n-id="last_page_label">Go to Last Page</span>
+          </button>
+          <div class="horizontalToolbarSeparator"></div>
+          <button id="pageRotateCw" class="secondaryToolbarButton rotateCw" title="Rotate Clockwise" tabindex="58" data-l10n-id="page_rotate_cw">
+            <span data-l10n-id="page_rotate_cw_label">Rotate Clockwise</span>
+          </button>
+          <button id="pageRotateCcw" class="secondaryToolbarButton rotateCcw" title="Rotate Counter-Clockwise" tabindex="59" data-l10n-id="page_rotate_ccw">
+            <span data-l10n-id="page_rotate_ccw_label">Rotate Counter-Clockwise</span>
+          </button>
+          <div class="horizontalToolbarSeparator"></div>
+          <div id="cursorSelectAndMoveToolbarButton" class="toolbarButton" hidden="true">
+            <button id="cursorSelectAndMove" class="toolbarButton" title="Select and Move" tabindex="60" data-l10n-id="cursor_select_and_move">
+              <span data-l10n-id="cursor_select_and_move_label">Select and Move</span>
+            </button>
+        </div>
+          <div id="cursorHandToolbarButton" class="toolbarButton" hidden="true">
+            <button id="cursorHandTool" class="toolbarButton" title="Hand Tool" tabindex="61" data-l10n-id="hands_select">
+              <span data-l10n-id="cursor_hand_tool_label">Hand Tool</span>
+            </button>
+        </div>
+          <div class="horizontalToolbarSeparator"></div>
+          <button id="scrollPage" class="secondaryToolbarButton scrollPage" title="Use Page Scrolling" tabindex="62" data-l10n-id="scroll_page">
+            <span data-l10n-id="scroll_page_label">Page Scrolling</span>
+          </button>
+          <button id="scrollVertical" class="secondaryToolbarButton scrollVertical" title="Use Vertical Scrolling" tabindex="63" data-l10n-id="scroll_vertical">
+            <span data-l10n-id="scroll_vertical_label">Vertical Scrolling</span>
+          </button>
+          <button id="scrollHorizontal" class="secondaryToolbarButton scrollHorizontal" title="Use Horizontal Scrolling" tabindex="64" data-l10n-id="scroll_horizontal">
+            <span data-l10n-id="scroll_horizontal_label">Horizontal Scrolling</span>
+          </button>
+          <button id="scrollWrapped" class="secondaryToolbarButton scrollWrapped" title="Use Wrapped Scrolling" tabindex="65" data-l10n-id="scroll_wrapped">
+            <span data-l10n-id="scroll_wrapped_label">Wrapped Scrolling</span>
+          </button>
+          <div class="horizontalToolbarSeparator"></div>
+          <button id="spreadNone" class="secondaryToolbarButton spreadNone" title="Do not join page spreads" tabindex="66" data-l10n-id="spread_none">
+            <span data-l10n-id="spread_none_label">No Spreads</span>
+          </button>
+          <button id="spreadOdd" class="secondaryToolbarButton spreadOdd" title="Join page spreads starting with odd-numbered pages" tabindex="67" data-l10n-id="spread_odd">
+            <span data-l10n-id="spread_odd_label">Odd Spreads</span>
+          </button>
+          <button id="spreadEven" class="secondaryToolbarButton spreadEven" title="Join page spreads starting with even-numbered pages" tabindex="68" data-l10n-id="spread_even">
+            <span data-l10n-id="spread_even_label">Even Spreads</span>
+          </button>
+          <div class="horizontalToolbarSeparator"></div>
+          <button id="imageAltTextSettings" class="secondaryToolbarButton imageAltTextSettings" title="Image Alt Text Settings" tabindex="69" data-l10n-id="image_alt_text_settings">
+            <span data-l10n-id="image_alt_text_settings_label">Image Alt Text Settings</span>
+          </button>
+          <div class="horizontalToolbarSeparator"></div>
+          <button id="documentProperties" class="secondaryToolbarButton documentProperties" title="Document Properties…" tabindex="70" data-l10n-id="document_properties">
+            <span data-l10n-id="document_properties_label">Document Properties…</span>
+          </button>
+        </div>
+      </div>  <!-- secondaryToolbar -->
+
+      <div class="toolbar">
+        <div id="toolbarContainer">
+          <div id="toolbarViewer">
+            <div id="toolbarViewerLeft">
+              <button id="sidebarToggleButton" class="toolbarButton" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
+                <span data-l10n-id="toggle_sidebar_label">Toggle Sidebar</span>
+              </button>
+              <div class="toolbarButtonSpacer"></div>
+              <button id="viewFindButton" class="toolbarButton" title="Find in Document" tabindex="12" data-l10n-id="findbar">
+                <span data-l10n-id="findbar_label">Find</span>
+              </button>
+              <div class="splitToolbarButton">
+                <button id="previousPage" class="toolbarButton pageUp" title="Previous Page" tabindex="13" data-l10n-id="previous">
+                  <span data-l10n-id="previous_label">Previous</span>
+                </button>
+                <div class="splitToolbarButtonSeparator"></div>
+                <button id="nextPage" class="toolbarButton pageDown" title="Next Page" tabindex="14" data-l10n-id="next">
+                  <span data-l10n-id="next_label">Next</span>
+                </button>
+              </div>
+              <label id="pageNumberLabel" class="toolbarLabel" for="pageNumber" data-l10n-id="page_label">Page: </label>
+              <input type="number" id="pageNumber" class="toolbarField" value="1" min="1" tabindex="15">
+              <span id="numPages" class="toolbarLabel"></span>
+            </div>
+            <div id="toolbarViewerRight">
+              <button id="presentationModeButton" class="toolbarButton presentationMode hidden" title="Switch to Presentation Mode" tabindex="31" data-l10n-id="presentation_mode">
+                <span data-l10n-id="presentation_mode_label">Presentation Mode</span>
+              </button>
+              <button id="openFileButton" class="toolbarButton openFile hidden" title="Open File" tabindex="32" data-l10n-id="open_file">
+                <span data-l10n-id="open_file_label">Open File</span>
+              </button>
+              <button id="printButton" class="toolbarButton print hidden" title="Print" tabindex="33" data-l10n-id="print">
+                <span data-l10n-id="print_label">Print</span>
+              </button>
+              <button id="downloadButton" class="toolbarButton download hidden" title="Download" tabindex="34" data-l10n-id="download">
+                <span data-l10n-id="download_label">Download</span>
+              </button>
+              <a href="#viewBookmark=page" id="viewBookmark" class="toolbarButton bookmark hidden" title="Current view (copy or open in new tab)" tabindex="35" data-l10n-id="bookmark">
+                <span data-l10n-id="bookmark_label">Current View</span>
+              </a>
+              <div class="verticalToolbarSeparator hidden" id="toolbarViewerMiddle"></div>
+              <div id="editorModeButtons" class="splitToolbarButton toggled">
+                <button id="editorHighlightButton" class="toolbarButton" title="Highlight" tabindex="36" data-l10n-id="editor_highlight">
+                  <span data-l10n-id="editor_highlight_label">Highlight</span>
+                </button>
+                <button id="editorFreeTextButton" class="toolbarButton" title="Free Text" tabindex="37" data-l10n-id="editor_free_text">
+                  <span data-l10n-id="editor_free_text_label">Free Text</span>
+                </button>
+                <button id="editorInkButton" class="toolbarButton" title="Draw Ink" tabindex="38" data-l10n-id="editor_ink">
+                  <span data-l10n-id="editor_ink_label">Draw</span>
+                </button>
+                <button id="editorStampButton" class="toolbarButton" title="Add Stamp" tabindex="39" data-l10n-id="editor_stamp">
+                  <span data-l10n-id="editor_stamp_label">Stamp</span>
+                </button>
+              </div>
+              <div class="verticalToolbarSeparator"></div>
+              <button id="secondaryToolbarToggleButton" class="toolbarButton" title="Tools" tabindex="40" data-l10n-id="tools">
+                <span data-l10n-id="tools_label">Tools</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="loadingBar">
+          <div class="progress">
+            <div class="glimmer"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="viewerContainer" tabindex="0">
+        <div id="viewer" class="pdfViewer"></div>
+      </div>
+
+      <div id="errorWrapper" hidden="true">
+        <div id="errorMessageLeft">
+          <span id="errorMessage"></span>
+          <button id="errorShowMore" data-l10n-id="error_more_info">More Information</button>
+          <button id="errorShowLess" data-l10n-id="error_less_info" hidden="true">Less Information</button>
+        </div>
+        <div id="errorMessageRight">
+          <button id="errorClose" data-l10n-id="error_close">Close</button>
+        </div>
+      </div>
+    </div> <!-- mainContainer -->
+
+    <div id="overlayContainer" class="hidden">
+      <div id="passwordOverlay" class="container hidden">
+        <div class="dialog">
+          <div class="row">
+            <p id="passwordText" data-l10n-id="password_label">Enter the password:</p>
+          </div>
+          <div class="row">
+            <input type="password" id="password" class="toolbarField">
+          </div>
+          <div class="row">
+            <button id="passwordCancel" class="overlayButton" tabindex="41">
+              <span data-l10n-id="password_cancel">Cancel</span>
+            </button>
+            <button id="passwordSubmit" class="overlayButton" tabindex="42">
+              <span data-l10n-id="password_ok">OK</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="documentPropertiesOverlay" class="container hidden">
+        <div class="dialog">
+          <div class="row">
+            <span data-l10n-id="document_properties_file_name">File name:</span>
+            <p id="fileNameField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_file_size">File size:</span>
+            <p id="fileSizeField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_title">Title:</span>
+            <p id="titleField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_author">Author:</span>
+            <p id="authorField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_subject">Subject:</span>
+            <p id="subjectField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_keywords">Keywords:</span>
+            <p id="keywordsField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_creation_date">Creation Date:</span>
+            <p id="creationDateField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_modification_date">Modification Date:</span>
+            <p id="modificationDateField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_creator">Creator:</span>
+            <p id="creatorField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_producer">PDF Producer:</span>
+            <p id="producerField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_version">PDF version:</span>
+            <p id="versionField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_page_count">Page count:</span>
+            <p id="pageCountField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_page_size">Page size:</span>
+            <p id="pageSizeField">-</p>
+          </div>
+          <div class="row">
+            <span data-l10n-id="document_properties_linearized">Fast Web View:</span>
+            <p id="linearizedField">-</p>
+          </div>
+          <div class="row">
+            <button id="documentPropertiesClose" class="overlayButton" tabindex="43">
+              <span data-l10n-id="document_properties_close">Close</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="altTextSettingsDialog" class="container hidden">
+        <div class="dialog">
+          <div class="row">
+            <p id="altTextSettingsDescription">
+              Alt text (alternative text) helps when reading the document
+              aloud or when otherwise unable to see the document's images.
+            </p>
+          </div>
+          <div class="row">
+            <label for="altTextSettingsOverride">Override the default alt text model</label>
+            <input id="altTextSettingsOverride" type="checkbox">
+          </div>
+          <div class="row">
+            <label for="altTextSettingsModel">Alt text model</label>
+            <input id="altTextSettingsModel" type="text" disabled>
+          </div>
+          <div class="row">
+            <label for="altTextSettingsCreateModel">Create a new alt text model from the document</label>
+            <input id="altTextSettingsCreateModel" type="checkbox" disabled>
+          </div>
+          <div class="row">
+            <button id="altTextSettingsClose" class="overlayButton" tabindex="44">Close</button>
+          </div>
+        </div>
+      </div>
+      <div id="altTextDialog" class="container hidden">
+        <div class="dialog">
+          <div class="row">
+            <label for="altTextInput" id="altTextInputLabel">Alt text</label>
+          </div>
+          <div class="row">
+            <input id="altTextInput" type="text" tabindex="45">
+          </div>
+          <div class="row">
+            <label for="altTextTextarea" id="altTextTextareaLabel">Description (for complex images)</label>
+          </div>
+          <div class="row">
+            <textarea id="altTextTextarea" rows="6" tabindex="46"></textarea>
+          </div>
+          <div class="row">
+            <div class="separator"></div>
+          </div>
+          <div class="row">
+            <p>
+              Decorative images do not need alt text, but they must be marked
+              as such for accessibility.
+            </p>
+          </div>
+          <div class="row">
+            <input id="decorativeButton" type="checkbox" tabindex="47">
+            <label for="decorativeButton" id="decorativeButtonLabel">Mark as decorative</label>
+          </div>
+          <div class="row">
+            <div class="separator"></div>
+          </div>
+          <div class="row">
+            <p id="defaultAltText"></p>
+            <p id="altTextDisambiguation"></p>
+          </div>
+          <div class="row">
+            <button id="altTextCancel" class="overlayButton" tabindex="48">
+              <span>Cancel</span>
+            </button>
+            <button id="altTextSave" class="overlayButton" tabindex="49">
+              <span>Save</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="printContainer"></div>
+    </div>  <!-- overlayContainer -->
+  </div> <!-- outerContainer -->
+  <div id="printContainer"></div>
+
+  <input type="file" id="fileInput" class="hidden">
+
+  <!-- viewer.mjs auto-runs the PDF.js viewer on import. -->
+  <script type="module" src="viewer.mjs"></script>
+  <!-- Our save bridge: hooks webviewerloaded, watches annotation events,
+       and exposes window.LectureSave. Must load AFTER viewer.mjs. -->
+  <script type="module" src="lecture-save-bridge.js"></script>
+
+  <script>
+    // Wire the top toolbar's manual Save button once the bridge is ready.
+    window.addEventListener("message", (ev) => {
+      if (!ev.data || ev.data.source !== "lecture-save-bridge") return;
+      const status = document.getElementById("ltStatus");
+      const fileName = document.getElementById("ltFileName");
+      if (ev.data.type === "bridge:ready") {
+        const params = new URLSearchParams(window.location.search);
+        const fileUrl = params.get("file") || "";
+        fileName.textContent = fileUrl.split("/").pop() || "PDF";
+        if (status) status.textContent = "Ready";
+      } else if (ev.data.type === "save:start") {
+        if (status) { status.textContent = "Saving…"; status.className = "lt-status saving"; }
+      } else if (ev.data.type === "save:done") {
+        if (status) { status.textContent = "Saved ✓"; status.className = "lt-status ok"; }
+      } else if (ev.data.type === "save:error") {
+        if (status) { status.textContent = "Error: " + ev.data.message; status.className = "lt-status bad"; }
+      }
+    });
+    document.getElementById("ltSave").addEventListener("click", () => {
+      if (window.LectureSave) window.LectureSave.saveNow();
+    });
+    document.getElementById("ltReload").addEventListener("click", () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>

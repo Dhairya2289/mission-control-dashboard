@@ -1,0 +1,37 @@
+# Mission Control — systemd user service (template).
+#
+# Runs the dashboard from its OWN venv, so it is decoupled from any Hermes
+# install: a `hermes update` that rebuilds Hermes' venv cannot break the server.
+#
+# Install:
+#   1. ./install.sh                       # builds .venv + installs deps
+#   2. edit the paths below (REPLACE_WITH_REPO_DIR, REPLACE_WITH_USER)
+#   3. cp mission-control.service.example ~/.config/systemd/user/mission-control.service
+#   4. systemctl --user daemon-reload && systemctl --user enable --now mission-control
+#   5. journalctl --user -u mission-control -f
+#
+# Bind address/port come from the environment (MC_HOST/MC_PORT). Defaults to
+# loopback; set MC_HOST to a private tailnet IP in the EnvironmentFile to reach
+# it from other devices. There is no built-in auth — keep it off public nets.
+
+[Unit]
+Description=Mission Control Dashboard (FastAPI)
+After=default.target
+# If your data lives on a separate mount, gate startup on it, e.g.:
+# RequiresMountsFor=/mnt/storage
+
+[Service]
+Type=simple
+WorkingDirectory=REPLACE_WITH_REPO_DIR
+Environment=PYTHONUNBUFFERED=1
+# Defaults (overridden by .env below if it sets MC_HOST/MC_PORT).
+Environment=MC_HOST=127.0.0.1
+Environment=MC_PORT=51763
+# Load configuration (copy .env.example -> .env first). Optional but recommended.
+EnvironmentFile=-REPLACE_WITH_REPO_DIR/.env
+ExecStart=REPLACE_WITH_REPO_DIR/.venv/bin/python -m uvicorn main:app --host ${MC_HOST} --port ${MC_PORT} --log-level info
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

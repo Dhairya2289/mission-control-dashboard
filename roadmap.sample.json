@@ -1,0 +1,424 @@
+{
+ "meta": {
+  "title": "Exam Prep 2027 — Sample Roadmap",
+  "subtitle": "Physics · Chemistry · Mathematics — a worked example plan",
+  "started": "2026-07-01",
+  "mission": "A fictional sample roadmap that demonstrates the tracker's data model end to end. Replace it with your own plan in roadmap_private.py.",
+  "oneLine": "Kickoff sprint → build phase → PYQ sprint → finals.",
+  "source": "roadmap.sample.json"
+ },
+ "phases": [
+  {
+   "key": "killzone",
+   "label": "KICKOFF",
+   "name": "Kickoff Sprint",
+   "target": "Build momentum — clear foundations + start the lecture series",
+   "start": "2026-07-01",
+   "end": "2026-07-10",
+   "batch": true,
+   "pace": 3,
+   "mcqTarget": 15,
+   "studyHoursTarget": 6,
+   "color": "#f43f5e",
+   "totalDays": 10
+  },
+  {
+   "key": "build",
+   "label": "BUILD",
+   "name": "Build Phase",
+   "target": "Close the lecture backlog — 4 recordings/day",
+   "start": "2026-07-11",
+   "end": "2026-07-24",
+   "batch": true,
+   "pace": 4,
+   "mcqTarget": 25,
+   "studyHoursTarget": 7,
+   "color": "#fb923c",
+   "totalDays": 14
+  },
+  {
+   "key": "sprint",
+   "label": "PYQ SPRINT",
+   "name": "PYQ Sprint",
+   "target": "Past-paper drill on the weakest topics + benchmark mocks",
+   "start": "2026-07-25",
+   "end": "2026-08-03",
+   "batch": false,
+   "pace": 0,
+   "mcqTarget": 40,
+   "studyHoursTarget": 8,
+   "color": "#eab308",
+   "totalDays": 10
+  },
+  {
+   "key": "finals",
+   "label": "FINALS",
+   "name": "Finals",
+   "target": "Zero new content · full mocks → analysis · peak revision",
+   "start": "2026-08-04",
+   "end": "2026-08-14",
+   "batch": false,
+   "pace": 0,
+   "mcqTarget": 60,
+   "studyHoursTarget": 8,
+   "color": "#22c55e",
+   "totalDays": 11
+  }
+ ],
+ "exams": [
+  {
+   "key": "midterm",
+   "name": "Mock Test A",
+   "date": "2026-07-20",
+   "kind": "test",
+   "urgent": true,
+   "note": "First benchmark"
+  },
+  {
+   "key": "reg",
+   "name": "Exam Registration",
+   "date": "2026-07-31",
+   "kind": "deadline",
+   "urgent": true,
+   "note": "Register before the deadline"
+  },
+  {
+   "key": "final",
+   "name": "Final Exam",
+   "date": "2026-08-15",
+   "kind": "exam",
+   "primary": true,
+   "target": "Top percentile",
+   "note": "REAL EXAM"
+  }
+ ],
+ "primaryExam": "final",
+ "headerCountdowns": [
+  "midterm",
+  "final"
+ ],
+ "subjects": {
+  "phy": {
+   "label": "Physics",
+   "color": "#fbbf24"
+  },
+  "chem": {
+   "label": "Chemistry",
+   "color": "#38bdf8"
+  },
+  "math": {
+   "label": "Mathematics",
+   "color": "#c084fc"
+  },
+  "bio": {
+   "label": "Biology",
+   "color": "#34d399"
+  },
+  "review": {
+   "label": "Drill / Revision",
+   "color": "#f472b6"
+  },
+  "mock": {
+   "label": "Mocks",
+   "color": "#fb7185"
+  },
+  "admin": {
+   "label": "Admin / Exams",
+   "color": "#94a3b8"
+  }
+ },
+ "types": {
+  "batch": "Batch Lecture",
+  "oneshot": "One Shot",
+  "ncert": "Textbook",
+  "dpp": "Daily Practice",
+  "pyq": "PYQ Drill",
+  "revision": "Revision",
+  "formula": "Formula Sheet",
+  "test": "Mock / Test",
+  "bio": "Bio Sprint",
+  "admin": "Admin"
+ },
+ "batchWindows": {
+  "phy": [
+   {
+    "chapter": "Kinematics",
+    "start": "2026-07-07",
+    "end": "2026-07-18"
+   },
+   {
+    "chapter": "Newton's Laws",
+    "start": "2026-07-19",
+    "end": "2026-07-24",
+    "tier": 1,
+    "gold": true
+   }
+  ],
+  "math": [
+   {
+    "chapter": "Algebra",
+    "start": "2026-07-07",
+    "end": "2026-07-18"
+   },
+   {
+    "chapter": "Calculus I",
+    "start": "2026-07-19",
+    "end": "2026-07-24",
+    "tier": 1
+   }
+  ],
+  "chem": [
+   {
+    "chapter": "Atomic Structure",
+    "start": "2026-07-07",
+    "end": "2026-07-18"
+   },
+   {
+    "chapter": "Chemical Bonding",
+    "start": "2026-07-19",
+    "end": "2026-07-24",
+    "tier": 1,
+    "note": "Tier 1 — max depth"
+   }
+  ]
+ },
+ "tests": [
+  {
+   "name": "Mock Test A",
+   "date": "2026-07-20",
+   "target": "50–70",
+   "note": "First benchmark"
+  },
+  {
+   "name": "Mock Test B",
+   "date": "2026-08-05",
+   "target": "60–80",
+   "note": "Pre-finals"
+  }
+ ],
+ "alerts": [
+  {
+   "level": "red",
+   "text": "Exam registration closes Jul 31 — register now."
+  },
+  {
+   "level": "red",
+   "text": "Pace: step up to 4 recordings/day in the Build phase. Non-negotiable."
+  },
+  {
+   "level": "amber",
+   "text": "Newton's Laws (Jul 19–24) is a Tier-1 window — 10+ PYQs the same week."
+  },
+  {
+   "level": "amber",
+   "text": "Chemical Bonding (Jul 19–24) = Tier 1. Don't coast."
+  },
+  {
+   "level": "yellow",
+   "text": "Confirm exam center + admit card details by Aug 2."
+  }
+ ],
+ "kpis": [
+  {
+   "metric": "Lectures completed / week",
+   "target": "18+ (3/day) · 24+ (4/day in Build)"
+  },
+  {
+   "metric": "Practice questions / lecture",
+   "target": "20–30"
+  },
+  {
+   "metric": "PYQ questions / week",
+   "target": "50+"
+  },
+  {
+   "metric": "Error-log entries reviewed",
+   "target": "All due this week"
+  },
+  {
+   "metric": "Mock accuracy",
+   "target": ">70% on attempted"
+  }
+ ],
+ "priorityLadder": [
+  "1 · Chapter recordings (never sacrifice)",
+  "2 · Daily question solving (practice after every lecture)",
+  "3 · Revision (spaced-repetition schedule)",
+  "4 · Mocks + analysis (per test calendar)",
+  "5 · Admin / registration deadlines"
+ ],
+ "habits": [
+  {
+   "key": "water",
+   "label": "Water 3–4 L (8 glasses)",
+   "max": 10
+  },
+  {
+   "key": "sleep",
+   "label": "Sleep 7–8 h",
+   "max": 10
+  },
+  {
+   "key": "sunlight",
+   "label": "Sunlight / 20–30 min walk",
+   "max": 5
+  },
+  {
+   "key": "focus",
+   "label": "Deep-work block hit",
+   "max": 5
+  },
+  {
+   "key": "exercise",
+   "label": "Exercise / movement",
+   "max": 5
+  },
+  {
+   "key": "screen",
+   "label": "Productive > wasted screen time",
+   "max": 5
+  }
+ ],
+ "killzoneDays": [
+  {
+   "date": "2026-07-01",
+   "morning": [
+    "Math: Foundations L1",
+    "PChem: Basics L1",
+    "Phy: Units L1"
+   ],
+   "evening": "Foundations one-shot + 20 warm-up problems",
+   "etype": "oneshot",
+   "emin": 180
+  },
+  {
+   "date": "2026-07-02",
+   "morning": [
+    "Math: Foundations L2",
+    "PChem: Basics L2",
+    "Phy: Units L2"
+   ],
+   "evening": "Topic 1 one-shot (part 1) + textbook read",
+   "etype": "oneshot",
+   "emin": 200
+  },
+  {
+   "date": "2026-07-03",
+   "morning": [
+    "Math: Foundations L3",
+    "PChem: Basics L3",
+    "Phy: Units L3"
+   ],
+   "evening": "Topic 1 one-shot (finish) + textbook exercises",
+   "etype": "oneshot",
+   "emin": 200
+  },
+  {
+   "date": "2026-07-04",
+   "morning": [
+    "Math: Foundations L4",
+    "PChem: Basics L4",
+    "Phy: Units L4"
+   ],
+   "evening": "Topic 2 one-shot + notes",
+   "etype": "oneshot",
+   "emin": 190
+  },
+  {
+   "date": "2026-07-05",
+   "morning": [
+    "Math: Foundations L5",
+    "PChem: Basics L5",
+    "Phy: Units L5"
+   ],
+   "evening": "PYQ drill: foundations + topic 1 (30 Qs)",
+   "etype": "pyq",
+   "emin": 150
+  },
+  {
+   "date": "2026-07-06",
+   "morning": [
+    "Math: Foundations L6",
+    "PChem: Basics L6",
+    "Phy: Units L6"
+   ],
+   "evening": "Buffer / review — error log top 3",
+   "etype": "revision",
+   "emin": 120
+  }
+ ],
+ "adminTasks": [
+  {
+   "date": "2026-07-31",
+   "topic": "📌 Register for the exam before the deadline"
+  },
+  {
+   "date": "2026-08-02",
+   "topic": "📞 Confirm exam center + admit-card details"
+  }
+ ],
+ "phaseTasks": {
+  "build": [
+   {
+    "subject": "review",
+    "type": "dpp",
+    "topic": "Daily practice problems on the current chapter (10+ per sub-topic)",
+    "durationMinutes": 90,
+    "startTime": "15:00"
+   },
+   {
+    "subject": "admin",
+    "type": "revision",
+    "topic": "Error log + formula sheet + spaced-repetition due cards",
+    "durationMinutes": 30,
+    "startTime": "21:30"
+   }
+  ],
+  "sprint": [
+   {
+    "subject": "review",
+    "type": "pyq",
+    "topic": "Past-paper drill on the weakest topics (timed)",
+    "durationMinutes": 120,
+    "startTime": "10:00"
+   },
+   {
+    "subject": "mock",
+    "type": "test",
+    "topic": "Benchmark mock on test days + full analysis",
+    "durationMinutes": 120,
+    "startTime": "14:00"
+   }
+  ],
+  "finals": [
+   {
+    "subject": "mock",
+    "type": "test",
+    "topic": "Full-length mock (timed strictly)",
+    "durationMinutes": 180,
+    "startTime": "09:00"
+   },
+   {
+    "subject": "review",
+    "type": "revision",
+    "topic": "Mock analysis → error log top 3 → targeted PYQs",
+    "durationMinutes": 90,
+    "startTime": "13:00"
+   },
+   {
+    "subject": "review",
+    "type": "formula",
+    "topic": "Formula sheet full read + flashcards",
+    "durationMinutes": 45,
+    "startTime": "20:00"
+   }
+  ]
+ },
+ "nightRitual": {
+  "subject": "admin",
+  "type": "revision",
+  "topic": "Formula sheet (15 min) + Daily Shutdown: wins · mistake · tomorrow's first task",
+  "durationMinutes": 30,
+  "startTime": "23:00"
+ }
+}

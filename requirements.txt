@@ -1,0 +1,15 @@
+# Mission Control — web server dependencies.
+#
+# This is everything the FastAPI server itself needs. It is deliberately tiny:
+# the dashboard is mostly stdlib (sqlite3, urllib, pathlib) plus FastAPI. Agent
+# features shell out to a separate Hermes install (see README) and do not add
+# Python dependencies here.
+#
+# Install into the project's own venv so a `hermes update` can never break it:
+#     python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+
+fastapi==0.133.1
+uvicorn[standard]==0.41.0
+aiofiles>=23.2,<25
+httpx>=0.27,<0.29
+python-multipart>=0.0.9   # required by FastAPI for the file-upload endpoints (avatar, etc.)
