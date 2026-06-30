@@ -168,9 +168,24 @@ def _hydrate_agent_env(env: dict[str, str], profile_dir: Path) -> None:
 
 
 
+def _db(path, *, timeout: float = 10.0) -> sqlite3.Connection:
+    """Open a dashboard-owned SQLite DB with a busy_timeout set.
+
+    All these DBs live under HERMES_HOME and have a single writer (this web
+    server), but FastAPI serves requests concurrently, so two handlers can hit
+    the same DB at once. ``busy_timeout`` makes the loser wait-and-retry instead
+    of raising "database is locked". ``timeout`` is the connect-level lock wait;
+    the PRAGMA is the per-statement wait — set both. Journal mode is left at the
+    default rollback journal (ntfs3-safe; never WAL here — see memory.py).
+    """
+    conn = sqlite3.connect(str(path), timeout=timeout)
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+
 def _init_quiz_db() -> None:
     """Ensure quiz_attempts table exists."""
-    conn = sqlite3.connect(str(QUIZ_DB))
+    conn = _db(QUIZ_DB)
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS quiz_attempts (
@@ -189,7 +204,7 @@ def _init_quiz_db() -> None:
 
 
 def _init_flashcard_db() -> None:
-    conn = sqlite3.connect(str(FLASHCARD_DB))
+    conn = _db(FLASHCARD_DB)
     c = conn.cursor()
     c.execute(
         """
@@ -208,7 +223,7 @@ _init_quiz_db()
 _init_flashcard_db()
 
 def _init_tasks_db() -> None:
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute(
         """
@@ -228,7 +243,7 @@ def _init_tasks_db() -> None:
 _init_tasks_db()
 
 def _init_stickies_db() -> None:
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute(
         """
@@ -246,7 +261,7 @@ def _init_stickies_db() -> None:
     conn.close()
 
 def _init_pomodoro_db() -> None:
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute(
         """
@@ -264,7 +279,7 @@ _init_pomodoro_db()
 
 # Chat database
 def _init_chat_db() -> None:
-    conn = sqlite3.connect(str(CHAT_DB))
+    conn = _db(CHAT_DB)
     c = conn.cursor()
     c.execute(
         """
@@ -408,7 +423,7 @@ async def _mirror_message(agent: str, role: str, text: str) -> None:
 
 
 def _get_chat_history(agent: str, limit: int = 50) -> list[dict[str, Any]]:
-    conn = sqlite3.connect(str(CHAT_DB))
+    conn = _db(CHAT_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute(
@@ -422,7 +437,7 @@ def _get_chat_history(agent: str, limit: int = 50) -> list[dict[str, Any]]:
 
 
 def _trim_chat_history(agent: str, keep: int = 200) -> None:
-    conn = sqlite3.connect(str(CHAT_DB))
+    conn = _db(CHAT_DB)
     c = conn.cursor()
     c.execute(
         "DELETE FROM chat_messages WHERE agent = ? AND id NOT IN (SELECT id FROM chat_messages WHERE agent = ? ORDER BY id DESC LIMIT ?)",
@@ -434,7 +449,7 @@ def _trim_chat_history(agent: str, keep: int = 200) -> None:
 
 def _store_chat_message(agent: str, role: str, text: str) -> dict[str, Any]:
     now = datetime.now(timezone.utc).isoformat()
-    conn = sqlite3.connect(str(CHAT_DB))
+    conn = _db(CHAT_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute(
@@ -531,7 +546,7 @@ async def _run_agent_chat_turn(agent: str, user_text: str) -> None:
 
 def _update_research_status(id: int, status: str) -> None:
     """Flip a research row to a new status in research.db."""
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = _db(RESEARCH_DB)
     c = conn.cursor()
     c.execute("UPDATE research SET status = ? WHERE id = ?", (status, id))
     conn.commit()
@@ -623,7 +638,7 @@ async def reset_chat(agent: str) -> JSONResponse:
     agent = agent.strip().lower()
     if agent not in KNOWN_AGENTS:
         raise HTTPException(status_code=400, detail=f"unknown agent '{agent}'")
-    conn = sqlite3.connect(str(CHAT_DB))
+    conn = _db(CHAT_DB)
     c = conn.cursor()
     c.execute("DELETE FROM chat_messages WHERE agent = ?", (agent,))
     deleted = c.rowcount
@@ -842,7 +857,7 @@ async def create_research(payload: dict[str, Any]) -> JSONResponse:
     filename = f"{safe_title}_{int(time.time())}.md"
     RESEARCH_DIR.mkdir(parents=True, exist_ok=True)
 
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = _db(RESEARCH_DB)
     c = conn.cursor()
     c.execute(
         "INSERT INTO research (title, query, filename, status, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -909,7 +924,7 @@ async def create_research(payload: dict[str, Any]) -> JSONResponse:
 @app.get("/api/research")
 async def list_research() -> JSONResponse:
     """List all research requests. Status flips to 'complete' when the file exists on disk."""
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = _db(RESEARCH_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute(
@@ -932,7 +947,7 @@ async def list_research() -> JSONResponse:
 @app.get("/api/research/{research_id}")
 async def get_research(research_id: int) -> JSONResponse:
     """Return a single research item with its Markdown content if complete."""
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = _db(RESEARCH_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute(
@@ -964,7 +979,7 @@ async def get_research(research_id: int) -> JSONResponse:
 @app.post("/api/research/{research_id}/quiz")
 async def research_quiz(research_id: int) -> JSONResponse:
     """Hand a finished research file to Quizmaster to build a quiz."""
-    conn = sqlite3.connect(str(RESEARCH_DB))
+    conn = _db(RESEARCH_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute(
@@ -2204,7 +2219,7 @@ async def save_quiz_attempt(payload: dict[str, Any]) -> JSONResponse:
     if not subject or not filename or total <= 0:
         raise HTTPException(status_code=400, detail="subject, filename, and total required")
     percentage = round((score / total) * 100.0, 1) if total else 0.0
-    conn = sqlite3.connect(str(QUIZ_DB))
+    conn = _db(QUIZ_DB)
     c = conn.cursor()
     c.execute(
         "INSERT INTO quiz_attempts (subject, filename, score, total, percentage, time_seconds, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -2228,7 +2243,7 @@ async def save_quiz_attempt(payload: dict[str, Any]) -> JSONResponse:
 @app.get("/api/quiz/attempts")
 async def list_quiz_attempts(subject: str | None = None, limit: int = 50) -> JSONResponse:
     """Return recent quiz attempts plus per-subject averages."""
-    conn = sqlite3.connect(str(QUIZ_DB))
+    conn = _db(QUIZ_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     if subject:
@@ -2381,7 +2396,7 @@ async def get_subject_flashcard(subject: str, filename: str) -> JSONResponse:
 @app.get("/api/tasks")
 async def list_tasks(status: str | None = None) -> JSONResponse:
     """List tasks ordered by position."""
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     if status:
@@ -2410,7 +2425,7 @@ async def upsert_task(payload: dict[str, Any]) -> JSONResponse:
         import uuid
         task_id = uuid.uuid4().hex[:12]
     created_at = str(payload.get("created_at", "")).strip() or datetime.now(timezone.utc).isoformat()
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute(
         "INSERT INTO tasks (id, title, subject, status, position, created_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET title=excluded.title, subject=excluded.subject, status=excluded.status, position=excluded.position",
@@ -2424,7 +2439,7 @@ async def upsert_task(payload: dict[str, Any]) -> JSONResponse:
 @app.delete("/api/tasks/{task_id}")
 async def delete_task(task_id: str) -> JSONResponse:
     """Delete a task."""
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
     deleted = c.rowcount
@@ -2438,7 +2453,7 @@ async def delete_task(task_id: str) -> JSONResponse:
 
 @app.get("/api/stickies")
 async def list_stickies() -> JSONResponse:
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT * FROM stickies ORDER BY position ASC, created_at ASC")
@@ -2458,7 +2473,7 @@ async def upsert_sticky(payload: dict[str, Any]) -> JSONResponse:
         sid = uuid.uuid4().hex[:12]
         created_at = datetime.now(timezone.utc).isoformat()
     else:
-        conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+        conn = _db(PRODUCTIVITY_DB)
         c = conn.cursor()
         c.execute("SELECT created_at FROM stickies WHERE id = ?", (sid,))
         row = c.fetchone()
@@ -2467,7 +2482,7 @@ async def upsert_sticky(payload: dict[str, Any]) -> JSONResponse:
     color = str(payload.get("color", "amber")).strip()
     position = float(payload.get("position", 0))
     updated_at = datetime.now(timezone.utc).isoformat()
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute(
         "INSERT INTO stickies (id, content, color, position, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET content=excluded.content, color=excluded.color, position=excluded.position, updated_at=excluded.updated_at",
@@ -2480,7 +2495,7 @@ async def upsert_sticky(payload: dict[str, Any]) -> JSONResponse:
 
 @app.delete("/api/stickies/{sid}")
 async def delete_sticky(sid: str) -> JSONResponse:
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     c = conn.cursor()
     c.execute("DELETE FROM stickies WHERE id = ?", (sid,))
     deleted = c.rowcount
@@ -2494,7 +2509,7 @@ async def delete_sticky(sid: str) -> JSONResponse:
 @app.get("/api/pomodoro-today")
 async def get_pomodoro_today() -> JSONResponse:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB))
+    conn = _db(PRODUCTIVITY_DB)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("SELECT day, count, updated_at FROM pomodoro WHERE day = ?", (today,))
@@ -2509,7 +2524,7 @@ async def get_pomodoro_today() -> JSONResponse:
 async def increment_pomodoro_today() -> JSONResponse:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     now = datetime.now(timezone.utc).isoformat()
-    conn = sqlite3.connect(str(PRODUCTIVITY_DB), timeout=5)
+    conn = _db(PRODUCTIVITY_DB, timeout=5)
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute(
