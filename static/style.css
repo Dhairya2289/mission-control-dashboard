@@ -49,7 +49,7 @@
   --ink-1: #ffffff;
   --ink-2: rgba(255,255,255,0.62);
   --ink-3: rgba(255,255,255,0.40);
-  --ink-4: rgba(255,255,255,0.30);
+  --ink-4: rgba(255,255,255,0.50);    /* bumped from 0.30 → meets WCAG AA on OLED black */
   --ink:        var(--ink-1);
   --ink-muted:  var(--ink-2);
   --ink-faint:  var(--ink-3);

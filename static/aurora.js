@@ -246,6 +246,21 @@
     if (e.key === "Escape" && helpBackdrop && helpBackdrop.classList.contains("is-open")) {
       e.preventDefault(); helpClose(); return;
     }
+    // Focus trap: while the keyboard-help modal is open, Tab loops within it.
+    // Without this, Tab escapes the modal and walks the page behind, which
+    // means screen-reader users (and anyone keyboard-only) can't tell the
+    // modal is modal.
+    if (e.key === "Tab" && helpBackdrop && helpBackdrop.classList.contains("is-open")) {
+      var modal = helpBackdrop.querySelector(".kbd-help-modal");
+      if (!modal) return;
+      var focusables = modal.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables.length) { e.preventDefault(); modal.focus(); return; }
+      var first = focusables[0], last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); return; }
+      if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); return; }
+    }
     if (e.metaKey || e.ctrlKey || e.altKey || isTyping(e.target)) return;
 
     var data = null;

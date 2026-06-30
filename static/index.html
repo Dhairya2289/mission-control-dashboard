@@ -402,7 +402,7 @@
             <div class="ov-rail-card ov-agents-card" data-tilt>
               <div class="ov-rail-head">
                 <span class="ov-rail-title">Agent Performance</span>
-                <button type="button" class="ov-rail-jump" @click="activeTab='agents'" title="Open Agents">
+                <button type="button" class="ov-rail-jump" @click="activeTab='agents'" title="Open Agents" aria-label="Open Agents">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
                 </button>
               </div>
@@ -441,7 +441,7 @@
             <div class="ov-rail-card ov-tools-card" data-tilt>
               <div class="ov-rail-head">
                 <span class="ov-rail-title">Active Tools</span>
-                <button type="button" class="ov-rail-jump" @click="activeTab='system'" title="Open System">
+                <button type="button" class="ov-rail-jump" @click="activeTab='system'" title="Open System" aria-label="Open System">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
                 </button>
               </div>
@@ -897,7 +897,7 @@
                   <p class="chat-empty-s">Pick an agent on the left, then send a message. The reply will appear here even if you navigate away.</p>
                 </div>
 
-                <div class="upload-alert bad" x-show="chat.error" x-cloak>
+                <div class="upload-alert bad" role="alert" x-show="chat.error" x-cloak>
                   <strong>Chat error</strong>
                   <span x-text="chat.error"></span>
                 </div>
@@ -1214,7 +1214,7 @@
               </div>
 
               <!-- Alerts -->
-              <div class="upload-alert ok" x-show="uploadMessage" x-cloak>
+              <div aria-live="polite" class="upload-alert ok" x-show="uploadMessage" x-cloak>
                 <div class="upload-alert-dot ok"></div>
                 <div>
                   <strong>Bill is coordinating now</strong>
@@ -1222,7 +1222,7 @@
                   <code x-show="uploadResponse && uploadResponse.file" x-text="uploadResponse?.file?.path"></code>
                 </div>
               </div>
-              <div class="upload-alert bad" x-show="uploadError" x-cloak>
+              <div class="upload-alert bad" role="alert" x-show="uploadError" x-cloak>
                 <div class="upload-alert-dot bad"></div>
                 <div>
                   <strong>Upload blocked</strong>
@@ -1441,7 +1441,7 @@
                 <p class="notes-empty-s" x-text="notes.subject ? `Scholar's Markdown for ${notes.subject} will render here with styled headings, tables, code and callouts.` : 'Select a subject and a note to start reading.'"></p>
               </div>
               <article id="library-note-body" class="note-body polished-note" x-show="notes.content" x-html="notes.html"></article>
-              <div class="upload-alert bad" x-show="notes.error" x-cloak>
+              <div class="upload-alert bad" role="alert" x-show="notes.error" x-cloak>
                 <div class="upload-alert-dot bad"></div>
                 <div>
                   <strong>Notes blocked</strong>
@@ -1612,14 +1612,14 @@
                 </div>
               </div>
 
-              <div class="upload-alert ok" x-show="researchMessage" x-cloak>
+              <div aria-live="polite" class="upload-alert ok" x-show="researchMessage" x-cloak>
                 <div class="upload-alert-dot ok"></div>
                 <div>
                   <strong>Research queued</strong>
                   <span x-text="researchMessage"></span>
                 </div>
               </div>
-              <div class="upload-alert bad" x-show="researchError" x-cloak>
+              <div class="upload-alert bad" role="alert" x-show="researchError" x-cloak>
                 <div class="upload-alert-dot bad"></div>
                 <div>
                   <strong>Research blocked</strong>
@@ -1729,21 +1729,21 @@
 
             <div class="note-body research-doc" x-show="researchContent" x-html="researchContent"></div>
 
-            <div class="upload-alert ok" x-show="researchQuizMessage" x-cloak>
+            <div aria-live="polite" class="upload-alert ok" x-show="researchQuizMessage" x-cloak>
               <div class="upload-alert-dot ok"></div>
               <div>
                 <strong>Quiz requested</strong>
                 <span x-text="researchQuizMessage"></span>
               </div>
             </div>
-            <div class="upload-alert ok" x-show="researchSendMsg" x-cloak>
+            <div aria-live="polite" class="upload-alert ok" x-show="researchSendMsg" x-cloak>
               <div class="upload-alert-dot ok"></div>
               <div>
                 <strong>Sent to NotebookLM</strong>
                 <span x-text="researchSendMsg"></span>
               </div>
             </div>
-            <div class="upload-alert bad" x-show="researchSendErr && !researchSendOpen" x-cloak>
+            <div class="upload-alert bad" role="alert" x-show="researchSendErr && !researchSendOpen" x-cloak>
               <div class="upload-alert-dot bad"></div>
               <div>
                 <strong>Send failed</strong>
@@ -2427,7 +2427,7 @@
               </div>
             </div>
           </template>
-          <div class="upload-alert bad" x-show="tracker.error" x-cloak><div class="upload-alert-dot bad"></div><div><strong>Tracker error</strong><span x-text="tracker.error"></span></div></div>
+          <div class="upload-alert bad" role="alert" x-show="tracker.error" x-cloak><div class="upload-alert-dot bad"></div><div><strong>Tracker error</strong><span x-text="tracker.error"></span></div></div>
         </section>
 
         <!-- ─── Plan · Tracker (Roadmap) ─── -->
@@ -2751,7 +2751,7 @@
             </section>
           </div>
 
-          <div class="upload-alert bad" x-show="schedule.error" x-cloak>
+          <div class="upload-alert bad" role="alert" x-show="schedule.error" x-cloak>
             <div class="upload-alert-dot bad"></div>
             <div>
               <strong>Schedule blocked</strong>
@@ -2817,7 +2817,7 @@
             </div>
           </div>
 
-          <div class="upload-alert bad" x-show="tasks.error && tasks.error.startsWith('Failed')" x-cloak>
+          <div class="upload-alert bad" role="alert" x-show="tasks.error && tasks.error.startsWith('Failed')" x-cloak>
             <div class="upload-alert-dot bad"></div>
             <div>
               <strong>Tasks blocked</strong>
@@ -3008,7 +3008,7 @@
                 </button>
               </div>
 
-              <div class="upload-alert bad" x-show="focus.error" x-cloak>
+              <div class="upload-alert bad" role="alert" x-show="focus.error" x-cloak>
                 <div class="upload-alert-dot bad"></div>
                 <div>
                   <strong>Focus blocked</strong>
@@ -3277,7 +3277,7 @@
               </div>
             </div>
             <div class="notebook-head-actions">
-              <button class="btn btn-ghost btn-sm" @click="loadNotebookLM()" :disabled="nlmLoading" title="Refresh from NotebookLM">
+              <button class="btn btn-ghost btn-sm" @click="loadNotebookLM()" :disabled="nlmLoading" title="Refresh from NotebookLM" aria-label="Refresh from NotebookLM">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/><path d="M3 21v-5h5"/></svg>
                 Refresh
               </button>
@@ -3778,7 +3778,7 @@
             </button>
           </div>
 
-          <div class="upload-alert bad" x-show="memory.error" x-cloak>
+          <div class="upload-alert bad" role="alert" x-show="memory.error" x-cloak>
             <div class="upload-alert-dot bad"></div>
             <div>
               <strong>Memory error</strong>
@@ -4015,13 +4015,13 @@
           </div>
           <div class="graph-toolbar">
             <div class="graph-chips" role="group" aria-label="Graph mode">
-              <button type="button" class="graph-chip" :class="{ active: graph.mode === 'agents' }" @click="setGraphMode('agents')" title="Agent ⇄ model activity network">
+              <button type="button" class="graph-chip" :class="{ active: graph.mode === 'agents' }" @click="setGraphMode('agents')" title="Agent ⇄ model activity network" aria-label="Show agent/model activity graph">
                 <span class="graph-chip-dot" style="background:var(--accent)"></span> Agents
               </button>
-              <button type="button" class="graph-chip" :class="{ active: graph.mode === 'concepts' }" @click="setGraphMode('concepts')" title="Your study knowledge — concepts from ~/subjects notes">
+              <button type="button" class="graph-chip" :class="{ active: graph.mode === 'concepts' }" @click="setGraphMode('concepts')" title="Your study knowledge — concepts from ~/subjects notes" aria-label="Show concepts graph">
                 <span class="graph-chip-dot" style="background:var(--copper)"></span> Concepts
               </button>
-              <button type="button" class="graph-chip" :class="{ active: graph.mode === 'code' }" @click="setGraphMode('code')" title="The dashboard's own code architecture">
+              <button type="button" class="graph-chip" :class="{ active: graph.mode === 'code' }" @click="setGraphMode('code')" title="The dashboard's own code architecture" aria-label="Show code architecture graph">
                 <span class="graph-chip-dot" style="background:#60a5fa"></span> Code
               </button>
             </div>
