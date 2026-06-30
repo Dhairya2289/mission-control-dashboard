@@ -28,9 +28,12 @@ import signal
 import struct
 import fcntl
 import termios
+from datetime import datetime
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+
+import config
 
 router = APIRouter()
 
@@ -60,6 +63,45 @@ def _origin_allowed(websocket: WebSocket) -> bool:
 # How much we try to read off the pty master in one go. xterm.js handles any
 # chunk size; this just bounds a single read() syscall.
 READ_CHUNK = 65536
+
+# Append-only audit log for every byte that crosses the pty bridge.
+# Forensic trail that survives the no-auth single-user design premise: if
+# anything ever goes wrong, you have a record of what was typed and what came
+# back. Rotated by date, mode 0600. Failure to open or write is best-effort —
+# the shell must still work even if logging breaks.
+_AUDIT_DIR = config.HERMES_HOME / "audit"
+
+
+def _open_audit_log() -> int | None:
+    """Open today's terminal audit log for append-only writes, return the fd.
+
+    Returns None on any failure so callers can no-op silently — the shell
+    surface must keep working even if the audit subsystem is broken.
+    """
+    try:
+        _AUDIT_DIR.mkdir(parents=True, exist_ok=True)
+        path = _AUDIT_DIR / f"terminal-{datetime.now().strftime('%Y%m%d')}.log"
+        return os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+    except OSError:
+        return None
+
+
+def _audit(fd: int | None, direction: str, data: bytes) -> None:
+    """Append one timestamped record to the audit log. Never raises.
+
+    Format (one line per record): `<iso8601> <direction> <len> <payload-repr>\n`
+    payload-repr is the bytes literal so embedded newlines / control codes
+    don't break log structure. ``direction`` is ``in`` (browser -> shell) or
+    ``out`` (shell -> browser).
+    """
+    if fd is None or not data:
+        return
+    try:
+        ts = datetime.now().isoformat(timespec="milliseconds")
+        line = f"{ts} {direction} {len(data)} {data!r}\n".encode("utf-8", "replace")
+        os.write(fd, line)
+    except OSError:
+        pass
 
 
 def _pick_shell() -> list[str]:
@@ -161,6 +203,9 @@ async def terminal_ws(websocket: WebSocket) -> None:
 
     loop = asyncio.get_running_loop()
     pid, master_fd = _spawn_pty()
+    audit_fd = _open_audit_log()
+    if audit_fd is not None:
+        _audit(audit_fd, "meta", f"session-open pid={pid}".encode())
 
     # An asyncio.Event the reader uses to signal the shell exited / fd closed,
     # so the writer side and the outer handler can tear down promptly.
@@ -186,6 +231,7 @@ async def terminal_ws(websocket: WebSocket) -> None:
             if not chunk:
                 data_queue.put_nowait(None)
             else:
+                _audit(audit_fd, "out", chunk)
                 data_queue.put_nowait(chunk)
 
         try:
@@ -221,6 +267,7 @@ async def terminal_ws(websocket: WebSocket) -> None:
                 raw = message.get("bytes")
                 if raw is not None:
                     try:
+                        _audit(audit_fd, "in", raw)
                         os.write(master_fd, raw)
                     except OSError:
                         break
@@ -235,7 +282,9 @@ async def terminal_ws(websocket: WebSocket) -> None:
                 except (ValueError, TypeError):
                     # Not JSON -> treat as literal keystrokes.
                     try:
-                        os.write(master_fd, text.encode("utf-8", "replace"))
+                        b = text.encode("utf-8", "replace")
+                        _audit(audit_fd, "in", b)
+                        os.write(master_fd, b)
                     except OSError:
                         break
                     continue
@@ -244,18 +293,19 @@ async def terminal_ws(websocket: WebSocket) -> None:
                     mtype = payload.get("type")
                     if mtype == "resize":
                         try:
-                            _set_winsize(
-                                master_fd,
-                                int(payload.get("cols", 80)),
-                                int(payload.get("rows", 24)),
-                            )
+                            cols = int(payload.get("cols", 80))
+                            rows = int(payload.get("rows", 24))
+                            _set_winsize(master_fd, cols, rows)
+                            _audit(audit_fd, "meta", f"resize {cols}x{rows}".encode())
                         except (OSError, ValueError, TypeError):
                             pass
                         continue
                     if mtype == "input":
                         data = payload.get("data", "")
                         try:
-                            os.write(master_fd, str(data).encode("utf-8", "replace"))
+                            b = str(data).encode("utf-8", "replace")
+                            _audit(audit_fd, "in", b)
+                            os.write(master_fd, b)
                         except OSError:
                             break
                         continue
@@ -264,7 +314,9 @@ async def terminal_ws(websocket: WebSocket) -> None:
 
                 # JSON that isn't a control object -> send the raw text through.
                 try:
-                    os.write(master_fd, text.encode("utf-8", "replace"))
+                    b = text.encode("utf-8", "replace")
+                    _audit(audit_fd, "in", b)
+                    os.write(master_fd, b)
                 except OSError:
                     break
         except (WebSocketDisconnect, RuntimeError):
@@ -291,6 +343,12 @@ async def terminal_ws(websocket: WebSocket) -> None:
                 except (asyncio.CancelledError, Exception):  # noqa: BLE001
                     pass
         _reap(pid, master_fd)
+        if audit_fd is not None:
+            try:
+                _audit(audit_fd, "meta", b"session-close")
+                os.close(audit_fd)
+            except OSError:
+                pass
         try:
             await websocket.close()
         except (RuntimeError, WebSocketDisconnect):
