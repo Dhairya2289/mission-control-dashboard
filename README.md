@@ -12,8 +12,9 @@
 Mission Control is the front-end I run for my own daily study workflow. It is a
 single-page Alpine.js app served by a tiny FastAPI backend, surfacing data from
 a self-hosted install of [Hermes](https://github.com) (an open-source agent
-framework) plus a few local services (an Obsidian vault, an Open-Notebook-style
-RAG service, optional local TTS). Every external path, address, and data source
+framework) plus a few local services (an Obsidian vault, Google NotebookLM via
+a CLI bridge, optional local TTS). Every external path, address, and data
+source
 is read from environment variables, so the same code runs on any machine
 pointed at any Hermes install.
 
@@ -35,7 +36,7 @@ runtime — that lives in the Hermes project. The dashboard talks to it.
   from env vars — defaults mirror the author's machine, so a clone works as-is,
   and a `.env` lets anyone else point it at their own install.
 - **Decoupled from Hermes' venv.** The server runs from its own venv
-  (`requirements.txt`, four packages); agent oneshots shell out to
+  (`requirements.txt`, five packages); agent oneshots shell out to
   `$HERMES_PYTHON`. A `hermes update` that rebuilds Hermes' venv can't break
   the server.
 - **Degrades gracefully.** With no Hermes install present, the server still
@@ -51,14 +52,15 @@ flowchart LR
     B[Browser<br/>Alpine.js SPA] -->|REST + JSON| F[FastAPI<br/>main.py · 127.0.0.1:51763]
     F -->|read-only SQLite| H[(Hermes DBs<br/>agent-logs · research · quiz<br/>tracker · memory · chat · study)]
     F -->|subprocess<br/>HERMES_PYTHON| A[hermes agent CLI<br/>oneshots]
-    F -->|HTTP| N[Open-Notebook<br/>:5055]
+    F -->|subprocess| N[NotebookLM CLI<br/>notebooklm-py venv]
     F -->|fs| V[Obsidian vault<br/>.md files]
     F -->|fs| S[Subjects / Research<br/>markdown trees]
     F -->|optional| T[Kokoro TTS<br/>local read-aloud]
 ```
 
 **Stack:** Python 3.11 · FastAPI · `uvicorn[standard]` · `aiofiles` · `httpx` ·
-SQLite (read-only) · Alpine.js 3 · vanilla CSS · ApexCharts · Observable Plot ·
+`python-multipart` · SQLite (mostly read-only; small write surface for
+planner / stickies / pomodoro / avatar) · Alpine.js 3 · vanilla CSS · ApexCharts · Observable Plot ·
 d3 · Cytoscape · PDF.js · Mermaid · Markmap · xterm.js — all vendored.
 
 A longer write-up is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
@@ -87,7 +89,7 @@ read from a Hermes install's SQLite DBs; without one they show empty states.
 | Plan | Planner · Tasks | Kanban — To Do / In Progress / Done |
 | Plan | Planner · Focus | Pomodoro + sticky notes |
 | Knowledge | NotebookLM · Research | Web research runs with cited findings |
-| Knowledge | NotebookLM · Notebooks | Open-Notebook integration *(local :5055 service)* |
+| Knowledge | NotebookLM · Notebooks | Google NotebookLM via `notebooklm-py` CLI *(separate venv, interactive Google auth first run)* |
 | Knowledge | NotebookLM · Chat | RAG Q&A across notebooks |
 | Knowledge | NotebookLM · Studio | Notebook artifacts (briefings, mindmaps) |
 | Knowledge | Obsidian · Vault | Read-only browser for an Obsidian vault |
@@ -148,7 +150,7 @@ are the knobs:
 | `HERMES_PYTHON` | `$HERMES_HOME/hermes-agent/venv/bin/python` | Interpreter used to shell out to the Hermes CLI for agent oneshots. |
 | `SUBJECTS_DIR` | `$MC_HOME/subjects` | Markdown vault indexed by Library / Recall. |
 | `RESEARCH_DIR` | `$MC_HOME/research` | Scholar research output. |
-| `OBSIDIAN_VAULT` | `/mnt/storage/Obsidian/Obsidian_Vault_Master` | Obsidian vault surfaced through the Obsidian / Brain tabs. |
+| `OBSIDIAN_VAULT` | `$MC_HOME/Obsidian` | Obsidian vault surfaced through the Obsidian / Brain tabs. |
 | `KNOWLEDGE_DB` | `<repo>/memory_core.db` | Dashboard-local knowledge graph DB. |
 | `KOKORO_TTS_DIR` | `$MC_HOME/voice/tts` | Optional local Kokoro TTS (read-aloud). Degrades silently if absent. |
 

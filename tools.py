@@ -42,7 +42,7 @@ QUIZ_DB = HERMES_HOME / "quiz.db"
 STUDY_DB = HERMES_HOME / "study.db"
 PLANNING_DIR = HERMES_HOME / "planning"
 AGENT_LOG_DB = HERMES_HOME / "agent-logs.db"
-ENV_FILE = HERMES_HOME / ".env"
+ENV_FILE = config.ENV_FILE
 
 NOTE_EXTS = {".md", ".markdown", ".txt"}
 

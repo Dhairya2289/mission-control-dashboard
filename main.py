@@ -104,7 +104,7 @@ KNOWN_AGENTS = {"bill", "vault", "scholar", "quizmaster", "planner", "dev"}
 
 def _inject_telegram_env(env: dict[str, str]) -> None:
     """Read Telegram credentials from ~/.hermes/.env if missing from current env."""
-    env_file = HERMES_HOME_BILL / ".env"
+    env_file = config.ENV_FILE
     if not env_file.is_file():
         return
     needed = {"TELEGRAM_BOT_TOKEN", "TELEGRAM_HOME_CHANNEL"}
@@ -148,7 +148,7 @@ def _hydrate_agent_env(env: dict[str, str], profile_dir: Path) -> None:
     env_file = profile_dir / ".env"
     if not env_file.is_file():
         # Fall back to global .env if profile .env is missing
-        env_file = HERMES_HOME_BILL / ".env"
+        env_file = config.ENV_FILE
     if not env_file.is_file():
         return
     if all(env.get(k) for k in _AGENT_REQUIRED_KEYS):
@@ -325,7 +325,7 @@ _BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like G
 
 
 def _read_discord_token() -> str:
-    env_file = HERMES_HOME_BILL / ".env"
+    env_file = config.ENV_FILE
     if not env_file.is_file():
         return ""
     try:
@@ -338,7 +338,7 @@ def _read_discord_token() -> str:
 
 
 def _read_telegram_creds() -> tuple[str, str]:
-    env_file = HERMES_HOME_BILL / ".env"
+    env_file = config.ENV_FILE
     if not env_file.is_file():
         return "", ""
     token = ""

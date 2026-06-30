@@ -1,8 +1,9 @@
 # Architecture
 
-A ~10k-line Python backend serving a ~9k-line single-page Alpine app. No build
-step, no framework, no client-side router. The whole UI is one `index.html`
-with `x-data="app()"` at the root; navigation is plain state mutation.
+A ~11k-line Python backend serving a ~13k-line single-page Alpine app
+(`index.html` + `app.js` + `style.css`). No build step, no framework, no
+client-side router. The whole UI is one `index.html` with `x-data="app()"` at
+the root; navigation is plain state mutation.
 
 This doc is the orientation map. The README has the install/config story; this
 one explains *how the pieces fit*.
@@ -25,10 +26,13 @@ FastAPI (main.py) at MC_HOST:MC_PORT
    │     -> stream stdout, persist task id, return for the Agents tab to follow
    │
    ├─ /api/obsidian/*  -> walk OBSIDIAN_VAULT, parse markdown, backlinks
-   ├─ /api/notebook/*  -> proxy to Open-Notebook on :5055
-   ├─ /api/terminal/ws -> WebSocket bridge to a pty (terminal tab)
+   ├─ /api/nlm/*       -> shells out to notebooklm-py CLI (Google NotebookLM,
+   │                      separate ~/.notebooklm-venv) — NOT an HTTP proxy
    ├─ /api/tts/*       -> optional Kokoro TTS subprocess (read-aloud)
    └─ /api/system/health -> probe each DB, process, mount, integration
+
+Plus WebSocket /ws/terminal -> pty bridge for the terminal tab (deliberately
+not under /api/* — same-origin check is in terminal.py).
 ```
 
 All external paths (DBs, vault, research dir, Hermes Python) come from
@@ -42,7 +46,7 @@ install. Hermes ships frequent updates that rebuild *its* venv. To keep the web
 server immune to that, two interpreters coexist:
 
 - **Web server venv** — `<repo>/.venv`, built by `install.sh` from
-  `requirements.txt`. Four runtime deps: `fastapi`, `uvicorn[standard]`,
+  `requirements.txt`. Five runtime deps: `fastapi`, `uvicorn[standard]`,
   `aiofiles`, `httpx`, `python-multipart`.
 - **Hermes venv** — `$HERMES_PYTHON`, used **only** as a subprocess target when
   the dashboard fires an agent oneshot (those need to `import hermes_cli`).
@@ -73,8 +77,10 @@ Every Hermes-backed endpoint guards its DB open with `safe_connect`; when the
 file is absent it returns a zeroed payload, and the Alpine tab renders its
 empty state. **No** module-level DB opens that crash startup.
 
-Optional integrations (Open-Notebook on `:5055`, Kokoro TTS, Anki export) are
-treated the same way: probe → degrade.
+Optional integrations (NotebookLM via `notebooklm-py` CLI, Kokoro TTS, Anki
+export) are treated the same way: probe → degrade. The NotebookLM bridge
+requires an interactive Google login the first time the CLI is run; the
+endpoints return `{ok: false, reason: "..."}` until that's done.
 
 ## The SPA shell
 

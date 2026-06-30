@@ -54,11 +54,9 @@ SUBJECTS_DIR = _env_path("SUBJECTS_DIR", HOME / "subjects")
 RESEARCH_DIR = _env_path("RESEARCH_DIR", HOME / "research")
 VOICE_DIR = _env_path("MC_VOICE_DIR", HOME / "voice")
 
-# Obsidian vault surfaced through the Obsidian / Brain tabs. Defaults to a data
-# disk on the author's box; override with $OBSIDIAN_VAULT anywhere else.
-OBSIDIAN_VAULT = _env_path(
-    "OBSIDIAN_VAULT", Path("/mnt/storage/Obsidian/Obsidian_Vault_Master")
-)
+# Obsidian vault surfaced through the Obsidian / Brain tabs. Defaults to
+# $HOME/Obsidian; override with $OBSIDIAN_VAULT for vaults that live elsewhere.
+OBSIDIAN_VAULT = _env_path("OBSIDIAN_VAULT", HOME / "Obsidian")
 
 # Optional secondary note locations (legacy memory bridge).
 LLM_WIKI_VAULT = _env_path("MC_LLM_WIKI", HOME / "Desktop" / "LLM Wiki")
