@@ -764,20 +764,6 @@ window.app = function () {
     // ============================================================
     // NAV
     // ============================================================
-    pageTitle() {
-      // Walk nav to find current item or sub-tab label
-      for (const g of this.nav) {
-        for (const it of g.items) {
-          if (it.id === this.activeTab) return it.label;
-          if (it.subTabs) {
-            const st = it.subTabs.find((s) => s.id === this.activeTab);
-            if (st) return it.label + " · " + st.label;
-          }
-        }
-      }
-      return "Mission Control";
-    },
-
     isNavActive(item) {
       if (item.id === this.activeTab) return true;
       if (item.subTabs && item.subTabs.some((t) => t.id === this.activeTab)) return true;
@@ -1601,55 +1587,8 @@ window.app = function () {
       render(typeof performance !== "undefined" ? performance.now() : 0);
     },
 
-    agentSummaryStrip() {
-      const s = this.agentsAnalytics?.summary || { online: 0, standby: 0, issues: 0, total_tasks: 0, agent_count: 6 };
-      return [
-        { label: "Online",      value: s.online,      icon: "●", color: "#22c55e" },
-        { label: "Standby",     value: s.standby,     icon: "◌", color: "#8891aa" },
-        { label: "Issues",      value: s.issues,      icon: "!", color: "#f43f5e" },
-        { label: "Total Tasks", value: s.total_tasks, icon: "✦", color: "#f97316" },
-        { label: "Agents",      value: s.agent_count, icon: "◎", color: "#6366f1" },
-      ];
-    },
-    agentKpis() {
-      const s = this.agentsAnalytics?.summary || {};
-      const t = this.agentsAnalytics?.task_statistics || {};
-      return {
-        total:    this.formatNumber(s.total_tasks ?? 0),
-        today:    this.formatNumber(t.tasks_today ?? 0),
-        week:     this.formatNumber(t.tasks_this_week ?? 0),
-        success:  (t.success_rate ?? 0) + "%",
-        active:   this.formatNumber(s.online ?? 0),
-        standby:  this.formatNumber(s.standby ?? 0),
-        issues:   this.formatNumber(s.issues ?? 0),
-        most:     t.most_active?.name || "—",
-        mostN:    this.formatNumber(t.most_active?.count || 0),
-      };
-    },
-
-    agentTaskStats() {
-      const s = this.agentsAnalytics?.task_statistics ||
-                { tasks_today: 0, tasks_this_week: 0, most_active: { name: "None", count: 0 }, success_rate: 0 };
-      return [
-        { label: "Tasks Today",     value: this.formatNumber(s.tasks_today),     sub: "across all agents" },
-        { label: "Tasks This Week", value: this.formatNumber(s.tasks_this_week), sub: "last seven days" },
-        { label: "Most Active",     value: s.most_active?.name || "None",
-          sub: this.formatNumber(s.most_active?.count || 0) + " tasks this week" },
-        { label: "Success Rate",    value: (s.success_rate || 0) + "%", sub: "completed / total" },
-      ];
-    },
-
     agentDistribution() {
       return this.agentsAnalytics?.task_statistics?.distribution || [];
-    },
-
-    agentStatusLabel(status) {
-      switch ((status || "").toLowerCase()) {
-        case "live":    return "LIVE";
-        case "standby": return "STANDBY";
-        case "issue":   return "ISSUE";
-        default:        return "IDLE";
-      }
     },
 
     filteredAgentRecent() {
@@ -1657,31 +1596,6 @@ window.app = function () {
       if (!Array.isArray(rows)) return [];
       if (!this.agentFilter || this.agentFilter === "all") return rows;
       return rows.filter(r => r && r.agent === this.agentFilter);
-    },
-
-    // ---- circular SVG ring gauge ----
-    agentGaugeSvg(percent, size, color) {
-      const sz = size || 44;
-      const stroke = Math.max(3, Math.round(sz * 0.10));
-      const r = sz / 2 - stroke / 2 - 1;
-      const cx = sz / 2, cy = sz / 2;
-      const c = 2 * Math.PI * r;
-      const p = Math.max(0, Math.min(100, Number(percent) || 0));
-      const dash = (p / 100) * c;
-      const trackColor = "rgba(255,255,255,0.06)";
-      const fill = color || "#f97316";
-      return `
-        <svg viewBox="0 0 ${sz} ${sz}" width="${sz}" height="${sz}" class="ring-gauge">
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${trackColor}" stroke-width="${stroke}"/>
-          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${fill}" stroke-width="${stroke}"
-                  stroke-linecap="round"
-                  stroke-dasharray="${dash.toFixed(2)} ${(c - dash).toFixed(2)}"
-                  transform="rotate(-90 ${cx} ${cy})"/>
-          <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
-                font-family="Inter, system-ui, sans-serif"
-                font-size="${Math.round(sz * 0.30)}" font-weight="800" fill="currentColor">${Math.round(p)}</text>
-        </svg>
-      `;
     },
 
     // ---- task distribution donut ----
@@ -2172,13 +2086,6 @@ window.app = function () {
     quizProgressPct() {
       const total = this.quiz.questions.length || 1;
       return Math.round(((this.quiz.currentIndex + (this.quiz.confirmed ? 1 : 0)) / total) * 100);
-    },
-
-    quizScoreRing() {
-      const pct = this.quiz.questions.length
-        ? (this.quiz.score / this.quiz.questions.length) * 100
-        : 0;
-      return pct;
     },
 
     formatTime(sec) {

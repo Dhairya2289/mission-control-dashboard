@@ -56,7 +56,7 @@ def _load_subject_labels() -> dict[str, str]:
         labels = {k: v["label"] for k, v in meta.get("subjects", {}).items()}
         if labels:
             return labels
-    except Exception:
+    except (OSError, ValueError, KeyError, TypeError):
         pass
     return {"phy": "Physics", "chem": "Chemistry", "math": "Mathematics",
             "bio": "Biology", "review": "Drill / Revision", "mock": "Mocks",

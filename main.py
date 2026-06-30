@@ -113,7 +113,7 @@ def _inject_telegram_env(env: dict[str, str]) -> None:
         return
     try:
         text = env_file.read_text(encoding="utf-8")
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         return
     for line in text.splitlines():
         line = line.strip()
@@ -155,7 +155,7 @@ def _hydrate_agent_env(env: dict[str, str], profile_dir: Path) -> None:
         return
     try:
         text = env_file.read_text(encoding="utf-8")
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         return
     for line in text.splitlines():
         line = line.strip()
@@ -970,7 +970,7 @@ async def get_research(research_id: int) -> JSONResponse:
     if data["ready"]:
         try:
             content = filepath.read_text(encoding="utf-8")
-        except Exception:
+        except (OSError, UnicodeDecodeError):
             content = ""
     data["content"] = content
     return JSONResponse(data)
@@ -3064,7 +3064,7 @@ async def _build_briefing() -> dict[str, Any]:
             if ok:
                 nbs = data.get("notebooks", data) if isinstance(data, dict) else data
                 nlm_notebooks = len(nbs or [])
-    except Exception:
+    except (OSError, ValueError, KeyError, TypeError):
         pass
 
     # Obsidian — yesterday's daily note (best guess from filename)
