@@ -127,7 +127,13 @@ def _parse_iso(s: str | None) -> datetime | None:
 def _conn() -> sqlite3.Connection:
     conn = sqlite3.connect(str(MEMORY_DB), timeout=10)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
+    # MEMORY_DB lives under HERMES_HOME, which on this deployment is an ntfs3
+    # mount. SQLite WAL needs a writable -shm mmap that ntfs3 handles
+    # unreliably across separate processes (intermittent "disk I/O error" —
+    # reproduced under concurrent fresh interpreters). TRUNCATE is a rollback
+    # journal with no -shm, and busy_timeout gives the wait-don't-error
+    # concurrency WAL was meant for. See the project's storage notes.
+    conn.execute("PRAGMA journal_mode=TRUNCATE")
     conn.execute("PRAGMA busy_timeout=5000")
     return conn
 
@@ -135,6 +141,9 @@ def _conn() -> sqlite3.Connection:
 def _init_db() -> None:
     HERMES_HOME.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(MEMORY_DB), timeout=10)
+    # Assert the ntfs3-safe journal mode on the schema-creating opener too, so a
+    # fresh DB is never left in WAL regardless of which opener runs first.
+    conn.execute("PRAGMA journal_mode=TRUNCATE")
     c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS memory_items (

@@ -185,6 +185,11 @@ def _parse_note(path: Path, root: Path) -> dict[str, Any] | None:
 def _conn() -> sqlite3.Connection:
     conn = sqlite3.connect(str(KNOWLEDGE_DB), timeout=10)
     conn.row_factory = sqlite3.Row
+    # WAL is fine here: KNOWLEDGE_DB defaults to the repo dir (a normal POSIX
+    # filesystem) and is opened only by the single long-lived web-server
+    # process. If you override KNOWLEDGE_DB onto an ntfs3 / SMB / NFS mount,
+    # switch this to journal_mode=TRUNCATE — WAL's -shm mmap is unreliable there
+    # (see memory.py for the ntfs3-safe pattern).
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout=5000")
     return conn
