@@ -882,26 +882,90 @@ async def tracker_meta() -> JSONResponse:
 
 @router.get("/api/tracker/stats")
 async def tracker_stats() -> JSONResponse:
-    scores = _all_day_scores()
-    streak = _streak()
+    # Single pass over tracker_days replaces what used to be 4+ scans
+    # (_all_day_scores called 3x via _heatmap/_weekly/here + _subject_progress's
+    # own pass + the inline LIMIT 30 fetch). Decode each row's JSON once and
+    # derive everything from the parsed list.
     conn = _conn()
-    rows = conn.execute("SELECT date, data FROM tracker_days ORDER BY date DESC LIMIT 30").fetchall()
+    rows = conn.execute(
+        "SELECT date, score, data FROM tracker_days ORDER BY date DESC"
+    ).fetchall()
     conn.close()
+
+    # Pre-decode JSON once. logs is in the same DESC order as rows.
+    scores: dict[str, int] = {}
+    decoded: list[tuple[str, dict[str, Any]]] = []
+    for r in rows:
+        scores[r["date"]] = r["score"] or 0
+        try:
+            decoded.append((r["date"], json.loads(r["data"])))
+        except (ValueError, TypeError):
+            decoded.append((r["date"], {}))
+
+    # Studied-day membership, streak (same definition as _streak/_studied_days).
+    studied: set[str] = set()
+    for date_key, log in decoded:
+        mcqs = sum(_as_int(e.get("attempted", 0)) for e in log.get("mcqEntries", []))
+        if log.get("studyBlocksCompleted") or mcqs > 0:
+            studied.add(date_key)
+
+    today = _now().date()
+    streak = 0
+    for i in range(1, 366):
+        k = (today - timedelta(days=i)).isoformat()
+        if k in studied:
+            streak += 1
+        else:
+            break
+    if today.isoformat() in studied:
+        streak += 1
+
+    # Aggregates over the last 30 entries (DESC, so the first 30).
     mcq_total = mcq_correct = 0
     active_days = 0
     total_minutes = 0
-    for r in rows:
-        try:
-            log = json.loads(r["data"])
-        except (ValueError, TypeError):
-            continue
-        if scores.get(r["date"], 0) > 0:
+    for date_key, log in decoded[:30]:
+        if scores.get(date_key, 0) > 0:
             active_days += 1
         total_minutes += log.get("totalStudyMinutes", 0)
         for e in log.get("mcqEntries", []):
             mcq_total += int(e.get("attempted", 0))
             mcq_correct += int(e.get("correct", 0))
     avg_score = round(sum(scores.values()) / len(scores)) if scores else 0
+
+    # Heatmap (last 364 days) + weekly (last 7 days), both derived from `scores`.
+    heatmap: list[dict[str, Any]] = []
+    for i in range(363, -1, -1):
+        d = today - timedelta(days=i)
+        k = d.isoformat()
+        heatmap.append({"date": k, "score": scores.get(k, 0), "weekday": d.weekday()})
+    weekly: list[dict[str, Any]] = []
+    for i in range(6, -1, -1):
+        d = today - timedelta(days=i)
+        k = d.isoformat()
+        weekly.append({"date": k, "weekday": d.strftime("%a"), "score": scores.get(k, 0)})
+
+    # Subject progress reuses the decoded rows.
+    total_per_subject: dict[str, int] = {}
+    for b in PLAN:
+        total_per_subject[b["subject"]] = total_per_subject.get(b["subject"], 0) + 1
+    done_ids: dict[str, set] = {}
+    for _date, log in decoded:
+        for bid in log.get("studyBlocksCompleted", []):
+            blk = PLAN_BY_ID.get(bid)
+            if blk:
+                done_ids.setdefault(blk["subject"], set()).add(bid)
+    subjects = []
+    for subj in sorted(total_per_subject, key=lambda s: -total_per_subject[s]):
+        t = total_per_subject[subj]
+        d = len(done_ids.get(subj, set()))
+        subjects.append({
+            "subject": subj, "label": SUBJECT_LABELS.get(subj, subj),
+            "color": SUBJECT_COLORS.get(subj, "#818cf8"),
+            "total": t, "done": d,
+            "percent": round((d / t) * 100) if t else 0,
+        })
+
     return JSONResponse({
         "streak": streak,
         "longestStreak": max(_meta_get("longest_streak", 0), streak),
@@ -910,9 +974,9 @@ async def tracker_stats() -> JSONResponse:
         "totalStudyHours": round(total_minutes / 60, 1),
         "mcqAccuracy": round((mcq_correct / mcq_total) * 100, 1) if mcq_total else None,
         "mcqTotal": mcq_total,
-        "heatmap": _heatmap(364),
-        "weekly": _weekly_scores(),
-        "subjects": _subject_progress(),
+        "heatmap": heatmap,
+        "weekly": weekly,
+        "subjects": subjects,
     })
 
 

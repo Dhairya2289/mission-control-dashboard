@@ -1666,14 +1666,21 @@ async def agents_analytics() -> dict[str, Any]:
 
     rows = _query_logs()
 
-    # bucket rows by agent (preserving DESC time order from the query)
-    by_agent: dict[str, list[tuple[str, str, str, str, str]]] = {a["key"]: [] for a in AGENT_REGISTRY}
+    # Bucket rows by agent, preserving DESC time order from the query, AND
+    # pre-parse `created_at` once per row. The inner loops below ask for the
+    # parsed datetime up to ~8x per row (today/week tally + 7-day sparkline);
+    # without this, every agents/analytics request reparsed each ISO string
+    # 8x. Tuple shape grows by one column (dt: datetime|None).
+    by_agent: dict[str, list[tuple[str, str, str, str, str, datetime | None]]] = {
+        a["key"]: [] for a in AGENT_REGISTRY
+    }
     merged: list[dict[str, Any]] = []
     for agent_name, task, model, status, ts in rows:
         key = (agent_name or "").strip().lower()
         if key not in by_agent:
             continue
-        by_agent[key].append((agent_name, task, model, status, ts))
+        dt = _parse_iso(ts)
+        by_agent[key].append((agent_name, task, model, status, ts, dt))
         meta = AGENT_BY_KEY[key]
         merged.append({
             "id": "",
@@ -1704,8 +1711,7 @@ async def agents_analytics() -> dict[str, Any]:
         tasks_today = 0
         tasks_this_week = 0
         last_dt: datetime | None = None
-        for _name, _task, _model, _status, ts in agent_rows:
-            dt = _parse_iso(ts)
+        for _name, _task, _model, _status, _ts, dt in agent_rows:
             if not dt:
                 continue
             if dt > week_ago:
@@ -1720,7 +1726,7 @@ async def agents_analytics() -> dict[str, Any]:
         for i in range(6, -1, -1):
             d = (today_local - timedelta(days=i))
             c = sum(1 for r in agent_rows
-                    if (_parse_iso(r[4]) or now).astimezone().date() == d)
+                    if r[5] and r[5].astimezone().date() == d)
             spark.append({"date": d.isoformat(), "count": c})
 
         # status: live (active in last 24h), standby (active in last 7d), idle (older / never)
