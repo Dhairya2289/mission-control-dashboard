@@ -1032,7 +1032,7 @@ def _safe_subject(name: str) -> Path:
     """Resolve `<SUBJECTS_DIR>/<name>` while blocking traversal."""
     safe = _SAFE_NAME_RE.sub("_", name).strip("._-") or "_"
     target = (SUBJECTS_DIR / safe).resolve()
-    if not str(target).startswith(str(SUBJECTS_DIR.resolve())):
+    if not target.is_relative_to(SUBJECTS_DIR.resolve()):
         raise HTTPException(status_code=400, detail="invalid subject")
     return target
 
@@ -1073,7 +1073,7 @@ async def get_note(subject: str, path: str) -> JSONResponse:
     subj_dir = _safe_subject(subject)
     notes_dir = subj_dir / "notes"
     target = (notes_dir / path).resolve()
-    if not str(target).startswith(str(notes_dir.resolve())):
+    if not target.is_relative_to(notes_dir.resolve()):
         raise HTTPException(status_code=400, detail="invalid path")
     if not target.is_file():
         raise HTTPException(status_code=404, detail="note not found")
@@ -1306,7 +1306,7 @@ def _parse_pdf_id(pdf_id: str) -> tuple[str, str]:
 def _resolve_pdf_path(subject: str, rel_path: str) -> Path:
     subj_dir = _safe_subject(subject)
     target = (subj_dir / rel_path).resolve()
-    if not str(target).startswith(str(subj_dir.resolve())):
+    if not target.is_relative_to(subj_dir.resolve()):
         raise HTTPException(status_code=400, detail="invalid path")
     if not target.is_file():
         raise HTTPException(status_code=404, detail="pdf not found")
@@ -2195,7 +2195,7 @@ async def get_subject_quiz(subject: str, filename: str) -> JSONResponse:
     subject_dir = _safe_subject(subject)
     quizzes_dir = subject_dir / "quizzes"
     target = (quizzes_dir / filename).resolve()
-    if not str(target).startswith(str(quizzes_dir.resolve())):
+    if not target.is_relative_to(quizzes_dir.resolve()):
         raise HTTPException(status_code=400, detail="invalid path")
     if not target.is_file():
         raise HTTPException(status_code=404, detail="quiz not found")
@@ -2378,7 +2378,7 @@ async def get_subject_flashcard(subject: str, filename: str) -> JSONResponse:
     subject_dir = _safe_subject(subject)
     flashcards_dir = subject_dir / "flashcards"
     target = (flashcards_dir / filename).resolve()
-    if not str(target).startswith(str(flashcards_dir.resolve())):
+    if not target.is_relative_to(flashcards_dir.resolve()):
         raise HTTPException(status_code=400, detail="invalid path")
     if not target.is_file():
         raise HTTPException(status_code=404, detail="deck not found")
@@ -2678,7 +2678,7 @@ async def obsidian_read_note(path: str) -> dict[str, Any]:
     if ".." in safe_rel.split("/"):
         raise HTTPException(status_code=400, detail="invalid path")
     full = (OBSIDIAN_VAULT / safe_rel).resolve()
-    if not str(full).startswith(str(OBSIDIAN_VAULT.resolve())):
+    if not full.is_relative_to(OBSIDIAN_VAULT.resolve()):
         raise HTTPException(status_code=400, detail="path escapes vault")
     if not full.is_file():
         raise HTTPException(status_code=404, detail=f"note not found: {safe_rel}")
